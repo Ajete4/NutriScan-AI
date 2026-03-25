@@ -2,6 +2,10 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const { message }: { message: string } = await req.json();
 
+    if (!message) {
+      return new Response(JSON.stringify({ error: "Mesazhi mungon" }), { status: 400 });
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -14,16 +18,20 @@ export async function POST(req: Request): Promise<Response> {
         messages: [
           {
             role: "system",
-            content: `Ti je një nutricionist profesional.
-            Përgjigju VETËM në formatin JSON.
-            Struktura e JSON duhet të jetë saktësisht kjo:
+            content: `Ti je një nutricionist profesional shqiptar.
+            Analizo vaktin dhe përgjigju VETËM në formatin JSON.
+            Rregullat:
+            - 'kalori', 'proteina', 'karbohidrate', 'yndyrna' duhet të jenë vetëm numra (psh "25g" bëje "25").
+            - 'keshilla' duhet të jetë një fjali inkurajuese.
+            
+            Struktura:
             {
               "ushqimi": "emri i ushqimit",
-              "kalori": "numri kcal",
-              "proteina": "gramet",
-              "karbohidrate": "gramet",
-              "yndyrna": "gramet",
-              "keshilla": "një këshillë e shkurtër"
+              "kalori": "vlerë numerike",
+              "proteina": "vlerë numerike",
+              "karbohidrate": "vlerë numerike",
+              "yndyrna": "vlerë numerike",
+              "keshilla": "tekst"
             }`,
           },
           { role: "user", content: message },
@@ -31,11 +39,13 @@ export async function POST(req: Request): Promise<Response> {
       }),
     });
 
-    type OpenAIResponse = {
-      choices: { message: { content: string } }[];
-    };
+    const data = await response.json();
 
-    const data: OpenAIResponse = await response.json();
+    // Kontrolli nëse OpenAI ktheu gabim (psh. API key i pasaktë)
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
     const aiContent = data.choices[0].message.content;
 
     return new Response(aiContent, {
@@ -43,13 +53,9 @@ export async function POST(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    return new Response(JSON.stringify({ error: "Gabim i panjohur" }), {
+    console.error("API Error:", error);
+    const errorMsg = error instanceof Error ? error.message : "Gabim i panjohur";
+    return new Response(JSON.stringify({ error: errorMsg }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
