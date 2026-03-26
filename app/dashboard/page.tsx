@@ -21,8 +21,7 @@ export default function DashboardPage() {
   const [result, setResult] = useState<NutriResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<NutriResult[]>([]);
-  
-  // State për Modal-in e personalizuar
+  const [notification, setNotification] = useState<{ type: "error" | "success"; message: string } | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
@@ -47,6 +46,11 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
+  const showNotification = (type: "error" | "success", message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 5000); // zhduket pas 5 sekondash
+  };
+
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodInput.trim()) return;
@@ -66,9 +70,10 @@ export default function DashboardPage() {
       setResult(data);
       setHistory((prev) => [data, ...prev].slice(0, 5));
       setFoodInput("");
+      showNotification("success", "Analiza u krye me sukses!");
     } catch (err: unknown) {
       console.error(err);
-      alert("Ndodhi një gabim gjatë analizës. Provo përsëri.");
+      showNotification("error", "Ndodhi një gabim gjatë analizës. Provo përsëri.");
     } finally {
       setLoading(false);
     }
@@ -76,6 +81,20 @@ export default function DashboardPage() {
 
   return (
     <main style={styles.main}>
+      {/* Notification */}
+      {notification && (
+        <div
+          style={{
+            ...styles.notification,
+            backgroundColor: notification.type === "error" ? "#FEE2E2" : "#DCFCE7",
+            color: notification.type === "error" ? "#B91C1C" : "#166534",
+            borderColor: notification.type === "error" ? "#FCA5A5" : "#4ADE80",
+          }}
+        >
+          {notification.type === "error" ? "⚠️" : "✅"} {notification.message}
+        </div>
+      )}
+
       {/* Custom Logout Modal */}
       {showLogoutModal && (
         <div style={styles.modalOverlay}>
@@ -110,7 +129,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <button onClick={() => setShowLogoutModal(true)} style={styles.logoutButton}>
-            Dil
+          Dil
         </button>
       </header>
 
@@ -291,5 +310,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#fff", 
     fontWeight: "700", 
     cursor: "pointer" 
+  },
+  notification: {
+    position: "fixed",
+    top: "20px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "15px 25px",
+    borderRadius: "12px",
+    border: "1px solid",
+    fontWeight: 600,
+    fontSize: "0.95rem",
+    zIndex: 2000,
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+    animation: "fadeIn 0.3s ease, fadeOut 0.5s 4.5s ease forwards",
   },
 };
