@@ -4,11 +4,11 @@ export function calculateCalories(profile: Profile): number {
   const { weight, height, age, gender, activity_level, goal } = profile;
 
   const bmr =
-    gender === "Mashkull"
+    gender === "Male"
       ? 10 * weight + 6.25 * height - 5 * age + 5
       : 10 * weight + 6.25 * height - 5 * age - 161;
 
-  const activityMap: Record<string, number> = {
+  const activityMap: Record<Profile["activity_level"], number> = {
     sedentary: 1.2,
     lightly_active: 1.375,
     moderate: 1.55,
@@ -18,8 +18,8 @@ export function calculateCalories(profile: Profile): number {
 
   let calories = bmr * activityMap[activity_level];
 
-  if (goal === "Humbje peshe") calories -= 400;
-  if (goal === "Shtim muskulor") calories += 300;
+  if (goal === "Weight Loss") calories -= 400;
+  if (goal === "Muscle Gain") calories += 300;
 
   return Math.round(calories);
 }
