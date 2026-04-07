@@ -1,63 +1,64 @@
-export async function POST(req: Request): Promise<Response> {
-  try {
-    const { message }: { message: string } = await req.json();
+import { NextRequest, NextResponse } from "next/server";
 
-    if (!message) {
-      return new Response(JSON.stringify({ error: "Mesazhi mungon" }), { status: 400 });
+interface Profile {
+  age?: number;
+  gender?: string;
+  weight?: number;
+  height?: number;
+  activity_level?: string;
+  goal?: string;
+  diet_type?: string;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { profile }: { profile?: Profile } = await req.json();
+
+    if (!profile) {
+      return NextResponse.json({ error: "Profile missing" }, { status: 400 });
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
-            content: `Ti je një nutricionist profesional shqiptar.
-            Analizo vaktin dhe përgjigju VETËM në formatin JSON.
-            Rregullat:
-            - 'kalori', 'proteina', 'karbohidrate', 'yndyrna' duhet të jenë vetëm numra (psh "25g" bëje "25").
-            - 'keshilla' duhet të jetë një fjali inkurajuese.
-            
-            Struktura:
-            {
-              "ushqimi": "emri i ushqimit",
-              "kalori": "vlerë numerike",
-              "proteina": "vlerë numerike",
-              "karbohidrate": "vlerë numerike",
-              "yndyrna": "vlerë numerike",
-              "keshilla": "tekst"
-            }`,
+            content: `
+Ti je një nutricionist profesional. Krijo një plan ushqimor bazuar në profilin e përdoruesit. Kthe vetëm JSON:
+{
+  "daily_plan": ["meal1", "meal2", "meal3"],
+  "weekly_plan": ["day1 plan", "day2 plan"],
+  "monthly_tips": ["tip1", "tip2"]
+}`,
           },
-          { role: "user", content: message },
+          { role: "user", content: JSON.stringify(profile) },
         ],
       }),
     });
 
-    const data = await response.json();
+    const data = await res.json();
+    const aiContent = data.choices?.[0]?.message?.content;
 
-    // Kontrolli nëse OpenAI ktheu gabim (psh. API key i pasaktë)
-    if (data.error) {
-      throw new Error(data.error.message);
+    if (!aiContent) {
+      return NextResponse.json({ error: "No response from AI" }, { status: 500 });
     }
 
-    const aiContent = data.choices[0].message.content;
+    let parsed;
+    try {
+      parsed = JSON.parse(aiContent);
+    } catch {
+      return NextResponse.json({ error: "Invalid AI JSON", raw: aiContent }, { status: 500 });
+    }
 
-    return new Response(aiContent, {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error: unknown) {
-    console.error("API Error:", error);
-    const errorMsg = error instanceof Error ? error.message : "Gabim i panjohur";
-    return new Response(JSON.stringify({ error: errorMsg }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json(parsed);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -4,101 +4,216 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
 
+// Icons
+import { LayoutDashboard, BarChart3, Droplets, Brain, LogOut } from "lucide-react";
+
+// Components
 import TopBar from "./components/TopBar";
-import DailyStats from "./components/DailyStats"; // path i ri
-import { Profile } from "@/types/profile";
+import DailyStats from "./components/DailyStats";
 import RecentLogs from "./components/RecentLogs";
-import HealthInsights from "./components/HealthInsights";
 import WaterTracker from "./components/WaterTracker";
+import AIRecommendations from "./components/AIRecommendations";
+import ProgressChart from "./components/ProgressChart";
 
+import { Profile } from "@/types/profile";
+import { AIPlan } from "@/types/ai";
 
+type AIResponse = {
+  daily_plan: string[];
+  weekly_plan: string[];
+  monthly_tips: string[];
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Kontrolli i login
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [plan, setPlan] = useState<AIPlan | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loadingPage, setLoadingPage] = useState(true);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
+      return;
     }
-  }, [user, loading, router]);
+    if (user) initializeDashboard();
+  }, [user, loading]);
 
-  // Nxjerrja e profile nga Supabase
-  useEffect(() => {
-    async function fetchProfile() {
-      if (!user) return;
-      setLoadingProfile(true);
-      const { data, error } = await supabase
+  const initializeDashboard = async () => {
+    try {
+      // FETCH PROFILE
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", user!.id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Gabim duke marrë profile:", error);
+      if (profileError || !profileData) {
+        console.error("Profile error:", profileError);
+        return;
       }
-      setProfile(data || null);
-      setLoadingProfile(false);
+      setProfile(profileData);
+
+      // CHECK EXISTING PLAN
+      const { data: existingPlan } = await supabase
+        .from("ai_plans")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<AIPlan>();
+
+      if (existingPlan) {
+        setPlan(existingPlan);
+        setLoadingPage(false);
+        return;
+      }
+
+      // GENERATE AI PLAN
+      const aiData = await generateAIPlan(profileData);
+      if (!aiData) return;
+
+      // SAVE PLAN
+      const { data: savedPlan, error: insertError } = await supabase
+        .from("ai_plans")
+        .insert({
+          user_id: user!.id,
+          daily_plan: aiData.daily_plan,
+          weekly_plan: aiData.weekly_plan,
+          monthly_tips: aiData.monthly_tips,
+        })
+        .select()
+        .single<AIPlan>();
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        return;
+      }
+
+      setPlan(savedPlan);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    } finally {
+      setLoadingPage(false);
     }
+  };
 
-    if (user) fetchProfile();
-  }, [user]);
+  const generateAIPlan = async (profile: Profile): Promise<AIResponse | null> => {
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("AI error:", errText);
+        return null;
+      }
+      return (await res.json()) as AIResponse;
+    } catch (err) {
+      console.error("AI fetch failed:", err);
+      return null;
+    }
+  };
 
-  if (loading || loadingProfile) {
+  // MENU (larguam Meal Plan)
+  const menuItems = [
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+    { id: "progress", label: "Analytics", icon: BarChart3 },
+    { id: "water", label: "Hydration", icon: Droplets },
+    { id: "ai", label: "AI Insights", icon: Brain },
+  ];
+
+  if (loading || loadingPage) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-white text-lg">Loading Dashboard...</p>
-      </div>
-    );
-  }
-
-  if (!user || !profile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-white text-lg">Profile not found. Please complete setup.</p>
+      <div className="h-screen flex items-center justify-center font-bold text-emerald-600">
+        Loading NutriScan...
       </div>
     );
   }
 
   return (
-  <main className="bg-gray-50 min-h-screen text-gray-900 pb-20">
-    <TopBar profile={profile} />
-
-    <div className="max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header-i me Mirëseardhje */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-          Mirë se vini, {profile.full_name?.split(' ')[0] || "Përdorues"}! 👋
-        </h1>
-        <p className="text-gray-500 font-medium">Sot është një ditë e shkëlqyer për të ngrënë shëndetshëm.</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Kolona Kryesore (E Majta - 8/12 rreshta) */}
-        <div className="lg:col-span-8 space-y-8">
-          <DailyStats profile={profile} />
-          <RecentLogs />
-        </div>
-
-        {/* Kolona Anësore (E Djathta - 4/12 rreshta) */}
-        <div className="lg:col-span-4 space-y-8">
-          <HealthInsights profile={profile} />
-          <WaterTracker />
-          
-          {/* Quick Tip Card */}
-          <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100">
-            <h4 className="text-emerald-900 font-black text-xs uppercase mb-2">Këshilla e ditës</h4>
-            <p className="text-emerald-700 text-sm font-medium italic">
-              Konsumimi i fibrave në mëngjes ndihmon në mbajtjen e energjisë stabile gjatë gjithë ditës.
-            </p>
+    <div className="flex min-h-screen bg-[#F8FAFC]">
+      {/* SIDEBAR */}
+      <aside className="fixed left-0 top-0 h-full w-72 bg-white border-r border-gray-100 hidden lg:flex flex-col p-8 z-50">
+        <div className="mb-12 flex items-center gap-2">
+          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
+            <Brain size={18} className="text-white" />
           </div>
+          <h2 className="text-xl font-black text-gray-900 tracking-tighter">
+            NUTRISCAN<span className="text-emerald-600 italic">AI</span>
+          </h2>
         </div>
-      </div>
+
+        <nav className="flex-1 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all ${activeTab === item.id
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+                }`}
+            >
+              <item.icon size={20} />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <button
+          onClick={() =>
+            supabase.auth.signOut().then(() => router.push("/login"))
+          }
+          className="flex items-center gap-4 px-5 py-4 text-gray-400 font-bold hover:text-red-500 transition-colors mt-auto"
+        >
+          <LogOut size={20} /> Logout
+        </button>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1 lg:ml-72 min-h-screen">
+        <TopBar profile={profile!} />
+
+        <div className="p-6 md:p-10 max-w-[1200px] mx-auto">
+          <AnimatePresence mode="wait">
+            {activeTab === "dashboard" && (
+              <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <DailyStats profile={profile!} />
+                <RecentLogs />
+              </motion.div>
+            )}
+
+            {activeTab === "progress" && (
+              <motion.div key="progress">
+                <ProgressChart /> {/* nuk i kalojmë plan, përdor mock data */}
+              </motion.div>
+            )}
+            {activeTab === "water" && (
+              <motion.div key="water">
+                <WaterTracker />
+              </motion.div>
+            )}
+
+            {activeTab === "ai" && (
+              <motion.div key="ai">
+                {plan ? (
+                  <AIRecommendations plan={plan} />
+                ) : (
+                  <p className="text-gray-500">
+                    AI plan is being generated or unavailable...
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </main>
     </div>
-  </main>
-);
+  );
 }
