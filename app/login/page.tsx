@@ -1,177 +1,351 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import Link from "next/link"; // Importojmë Link për navigim
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
-  const [message, setMessage] = useState({ text: "", type: "" });
-  
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<{ text: string; type: string }>({
+    text: "",
+    type: "",
+  });
+
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push("/dashboard");
-    }
+    const checkProfile = async () => {
+      if (!authLoading && user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!data) {
+          router.push("/setup");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    };
+
+    checkProfile();
   }, [user, authLoading, router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ text: "", type: "" });
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      setMessage({ text: "Email ose fjalëkalim i gabuar", type: "error" });
+      setMessage({
+        text: "Invalid email or password.",
+        type: "error",
+      });
       setLoading(false);
-    } else {
-      router.push("/dashboard");
+      return;
     }
+
+    // ✅ sigurohu që user ekziston
+    if (!data.session) {
+      setMessage({
+        text: "Login failed. No session created.",
+        type: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // ✅ login sukses
+    router.push("/setup");
   };
 
   if (authLoading) return null;
 
   return (
     <main style={styles.main}>
-      <div style={styles.card}>
-        <header style={styles.header}>
-          <div style={styles.logo}>🌿 NutriScan</div>
-          <h1 style={styles.title}>Mirë se vini</h1>
-          <p style={styles.subtitle}>Hyni në llogarinë tuaj për të vazhduar.</p>
-        </header>
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        style={styles.card}
+      >
+        {/* Logo */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 120 }}
+          style={styles.logo}
+        >
+          🌿 NutriScan <span style={styles.aiTag}>AI</span>
+        </motion.div>
+
+        <h1 style={styles.title}>Welcome Back</h1>
+        <p style={styles.subtitle}>
+          Connect to your virtual nutritionist
+        </p>
 
         <form onSubmit={handleLogin} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email</label>
+          {/* EMAIL */}
+          <div style={styles.inputWrapper}>
             <input
               type="email"
-              placeholder="emri@shembull.com"
               value={email}
-              onFocus={() => setFocusedInput("email")}
-              onBlur={() => setFocusedInput(null)}
               onChange={(e) => setEmail(e.target.value)}
-              style={{
-                ...styles.input,
-                borderColor: focusedInput === "email" ? "#101828" : "#CBD5E1",
-                boxShadow: focusedInput === "email" ? "0 0 0 4px rgba(16, 24, 40, 0.05)" : "none"
-              }}
               required
+              style={styles.input}
             />
+            <label
+              style={{
+                ...styles.label,
+                top: email ? "-8px" : "50%",
+                fontSize: email ? "0.7rem" : "0.9rem",
+                color: email ? "#2D6A4F" : "#94A3B8",
+              }}
+            >
+              Email Address
+            </label>
           </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Fjalëkalimi</label>
+          {/* PASSWORD */}
+          <div style={styles.inputWrapper}>
             <input
               type="password"
-              placeholder="••••••••"
               value={password}
-              onFocus={() => setFocusedInput("password")}
-              onBlur={() => setFocusedInput(null)}
               onChange={(e) => setPassword(e.target.value)}
-              style={{
-                ...styles.input,
-                borderColor: focusedInput === "password" ? "#101828" : "#CBD5E1",
-                boxShadow: focusedInput === "password" ? "0 0 0 4px rgba(16, 24, 40, 0.05)" : "none"
-              }}
               required
+              style={styles.input}
             />
+            <label
+              style={{
+                ...styles.label,
+                top: password ? "-8px" : "50%",
+                fontSize: password ? "0.7rem" : "0.9rem",
+                color: password ? "#2D6A4F" : "#94A3B8",
+              }}
+            >
+              Password
+            </label>
           </div>
 
+          <div style={{ textAlign: "right" }}>
+            <Link href="/forgot" style={styles.forgot}>
+              Forgot password?
+            </Link>
+          </div>
+
+          {/* MESSAGE */}
           {message.text && (
-            <p style={{ ...styles.message, color: message.type === "error" ? "#EF4444" : "#10B981" }}>
+            <div
+              style={{
+                ...styles.message,
+                backgroundColor:
+                  message.type === "error" ? "#FFF1F2" : "#ECFDF5",
+                color:
+                  message.type === "error" ? "#BE123C" : "#065F46",
+              }}
+            >
               {message.text}
-            </p>
+            </div>
           )}
 
-          <button type="submit" disabled={loading} style={styles.loginBtn}>
-            {loading ? "Duke u procesuar..." : "Hyni tani"}
-          </button>
+          {/* BUTTON */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            type="submit"
+            disabled={loading}
+            style={styles.button}
+          >
+            {loading ? "Authenticating..." : "Sign In"}
+          </motion.button>
         </form>
 
-        <div style={styles.footer}>
-          <p style={styles.footerText}>Nuk keni një llogari?</p>
-          <Link href="/signup" style={styles.signupLink}>
-            Krijoni llogari të re
+        <p style={styles.footer}>
+          Don’t have an account?
+          <Link href="/signup" style={styles.signup}>
+            {" "}Create one
           </Link>
-        </div>
-      </div>
+        </p>
+      </motion.div>
     </main>
   );
 }
-
 const styles: { [key: string]: React.CSSProperties } = {
-  main: { 
-    height: "100vh", 
-    display: "flex", 
-    justifyContent: "center", 
-    alignItems: "center", 
-    backgroundColor: "#F1F5F9", // Ngjyrë pak më e errët për sfondin
-    fontFamily: "'Inter', sans-serif",
-    padding: "20px"
+  main: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: "Inter, sans-serif",
+    background: "linear-gradient(135deg, #0F172A, #1E293B, #064E3B)",
+    position: "relative",
+    overflow: "hidden",
+    padding: "clamp(12px, 4vw, 24px)", // ✅ responsive spacing
   },
-  card: { 
-    backgroundColor: "#ffffff", 
-    padding: "45px 40px", 
-    borderRadius: "28px", 
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",  
-    width: "100%", 
-    maxWidth: "500px",
-    border: "1px solid #E2E8F0"
+
+  /* 🌟 Glow Effects */
+  glow1: {
+    position: "absolute",
+    width: "clamp(200px, 40vw, 320px)",
+    height: "clamp(200px, 40vw, 320px)",
+    background: "#10B981",
+    filter: "blur(140px)",
+    top: "-80px",
+    left: "-80px",
+    opacity: 0.35,
+    zIndex: 0,
   },
-  header: { textAlign: "center", marginBottom: "35px" },
-  logo: { fontSize: "1.1rem", fontWeight: "800", color: "#101828", marginBottom: "12px" },
-  title: { fontSize: "1.8rem", fontWeight: "800", color: "#0F172A", marginBottom: "8px", letterSpacing: "-0.5px" },
-  subtitle: { color: "#64748B", fontSize: "0.9rem" },
-  form: { display: "flex", flexDirection: "column", gap: "22px" },
-  inputGroup: { display: "flex", flexDirection: "column", gap: "8px" },
-  label: { fontSize: "0.85rem", fontWeight: "700", color: "#334155", marginLeft: "2px" },
-  input: { 
-    padding: "14px 16px", 
-    borderRadius: "12px", 
-    border: "2px solid", // Ngjyra kontrollohet dinamikisht lart
-    outline: "none", 
-    fontSize: "1rem",
-    color: "#1E293B",
-    backgroundColor: "#ffffff",
-    transition: "all 0.2s ease",
+
+  glow2: {
+    position: "absolute",
+    width: "clamp(180px, 35vw, 260px)",
+    height: "clamp(180px, 35vw, 260px)",
+    background: "#22D3EE",
+    filter: "blur(120px)",
+    bottom: "-60px",
+    right: "-60px",
+    opacity: 0.3,
+    zIndex: 0,
   },
-  loginBtn: { 
-    backgroundColor: "#101828", 
-    color: "#ffffff", 
-    border: "none", 
-    padding: "16px", 
-    borderRadius: "12px", 
-    fontWeight: "700", 
-    cursor: "pointer", 
-    fontSize: "1rem",
-    marginTop: "8px",
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+
+  /* 💎 Card */
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    padding: "clamp(24px, 5vw, 42px)",
+    borderRadius: "clamp(18px, 4vw, 26px)",
+    background: "rgba(255,255,255,0.05)",
+    backdropFilter: "blur(22px)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+    zIndex: 10,
   },
-  footer: { 
-    marginTop: "30px", 
-    textAlign: "center", 
-    paddingTop: "20px", 
-    borderTop: "1px solid #F1F5F9" 
+
+  /* 🌿 Logo */
+  logo: {
+    textAlign: "center",
+    fontWeight: "800",
+    fontSize: "clamp(1.2rem, 4vw, 1.6rem)",
+    marginBottom: "18px",
+    color: "#D1FAE5",
   },
-  footerText: { color: "#64748B", fontSize: "0.85rem", marginBottom: "5px" },
-  signupLink: { 
-    color: "#101828", 
-    fontWeight: "700", 
-    fontSize: "0.9rem", 
+
+  aiTag: {
+    background: "linear-gradient(135deg, #10B981, #059669)",
+    color: "#fff",
+    padding: "3px 9px",
+    borderRadius: "12px",
+    fontSize: "0.65rem",
+    marginLeft: "6px",
+    fontWeight: "700",
+  },
+
+  /* 🧠 Text */
+  title: {
+    textAlign: "center",
+    fontSize: "clamp(1.4rem, 4vw, 1.9rem)",
+    fontWeight: "800",
+    color: "#F1F5F9",
+    marginBottom: "6px",
+  },
+
+  subtitle: {
+    textAlign: "center",
+    fontSize: "clamp(0.8rem, 2.5vw, 0.95rem)",
+    color: "#94A3B8",
+    marginBottom: "clamp(18px, 4vw, 30px)",
+  },
+
+  /* 📦 Form */
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "clamp(14px, 3vw, 20px)",
+  },
+
+  inputWrapper: {
+    position: "relative",
+  },
+
+  /* 💎 Inputs */
+  input: {
+    width: "100%",
+    padding: "clamp(12px, 3vw, 15px)",
+    borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.12)",
+    outline: "none",
+    fontSize: "16px", // ✅ FIX mobile zoom
+    color: "#F8FAFC",
+    background: "rgba(255,255,255,0.05)",
+    backdropFilter: "blur(8px)",
+    transition: "all 0.25s ease",
+  },
+
+  label: {
+    position: "absolute",
+    left: "14px",
+    transform: "translateY(-50%)",
+    background: "transparent",
+    padding: "0 6px",
+    transition: "0.2s ease",
+    pointerEvents: "none",
+  },
+
+  /* 🔗 Links */
+  forgot: {
+    fontSize: "clamp(0.7rem, 2vw, 0.8rem)",
+    color: "#34D399",
     textDecoration: "none",
-    borderBottom: "2px solid #E2E8F0",
-    paddingBottom: "2px",
-    transition: "all 0.2s"
+    fontWeight: "500",
   },
-  message: { fontSize: "0.85rem", textAlign: "center", margin: "0", fontWeight: "600" }
+
+  signup: {
+    color: "#34D399",
+    fontWeight: "700",
+    textDecoration: "none",
+  },
+
+  /* 🚀 Button */
+  button: {
+    padding: "clamp(12px, 3vw, 15px)",
+    borderRadius: "14px",
+    border: "none",
+    background: "linear-gradient(135deg, #10B981, #059669)",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer",
+    fontSize: "clamp(0.9rem, 2.5vw, 1rem)",
+    boxShadow: "0 12px 30px rgba(16,185,129,0.35)",
+    transition: "all 0.3s ease",
+  },
+
+  /* 💬 Message */
+  message: {
+    padding: "12px",
+    borderRadius: "12px",
+    textAlign: "center",
+    fontSize: "0.85rem",
+    backdropFilter: "blur(10px)",
+  },
+
+  /* 📌 Footer */
+  footer: {
+    marginTop: "clamp(16px, 3vw, 24px)",
+    textAlign: "center",
+    fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)",
+    color: "#94A3B8",
+  },
 };
