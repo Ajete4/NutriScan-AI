@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [plan, setPlan] = useState<AIPlan | null>(null);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loadingPage, setLoadingPage] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,6 +45,9 @@ export default function DashboardPage() {
   }, [user, loading]);
 
   const initializeDashboard = async () => {
+    setLoadingPage(true);
+    setError(null);
+
     try {
       // FETCH PROFILE
       const { data: profileData, error: profileError } = await supabase
@@ -53,9 +57,22 @@ export default function DashboardPage() {
         .maybeSingle();
 
       if (profileError || !profileData) {
-        console.error("Profile error:", profileError);
+        setError("Profile not found or invalid.");
         return;
       }
+
+      // ✅ Edge Case: Incomplete profile
+      if (!profileData.gender || !profileData.goal || !profileData.activity_level) {
+        setError("Profile is incomplete. Please update your information.");
+        return;
+      }
+
+      // ✅ Edge Case: Too long input (example: allergies field)
+      if (profileData.allergies && profileData.allergies.length > 500) {
+        setError("Allergies input is too long. Please shorten it.");
+        return;
+      }
+
       setProfile(profileData);
 
       // CHECK EXISTING PLAN
@@ -69,13 +86,15 @@ export default function DashboardPage() {
 
       if (existingPlan) {
         setPlan(existingPlan);
-        setLoadingPage(false);
         return;
       }
 
       // GENERATE AI PLAN
       const aiData = await generateAIPlan(profileData);
-      if (!aiData) return;
+      if (!aiData) {
+        setError("AI plan could not be generated.");
+        return;
+      }
 
       // SAVE PLAN
       const { data: savedPlan, error: insertError } = await supabase
@@ -90,12 +109,13 @@ export default function DashboardPage() {
         .single<AIPlan>();
 
       if (insertError) {
-        console.error("Insert error:", insertError);
+        setError("Error saving AI plan.");
         return;
       }
 
       setPlan(savedPlan);
     } catch (err) {
+      setError("Unexpected dashboard error.");
       console.error("Dashboard error:", err);
     } finally {
       setLoadingPage(false);
@@ -109,19 +129,29 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile }),
       });
+
+      if (res.status === 401) {
+        setError("Session expired. Please log in again.");
+        router.push("/login");
+        return null;
+      }
+
       if (!res.ok) {
         const errText = await res.text();
+        setError("Server did not respond correctly.");
         console.error("AI error:", errText);
         return null;
       }
+
       return (await res.json()) as AIResponse;
     } catch (err) {
+      setError("No internet connection. Please try again.");
       console.error("AI fetch failed:", err);
       return null;
     }
   };
 
-  // MENU (larguam Meal Plan)
+  // MENU
   const menuItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
     { id: "progress", label: "Analytics", icon: BarChart3 },
@@ -133,6 +163,20 @@ export default function DashboardPage() {
     return (
       <div className="h-screen flex items-center justify-center font-bold text-emerald-600">
         Loading NutriScan...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center text-red-600 font-bold">
+        <p>{error}</p>
+        <button
+          onClick={() => initializeDashboard()}
+          className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -155,10 +199,12 @@ export default function DashboardPage() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all ${activeTab === item.id
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-                }`}
+              disabled={loadingPage} // prevent double submit
+              className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all ${
+                activeTab === item.id
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                  : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+              }`}
             >
               <item.icon size={20} />
               {item.label}
@@ -191,7 +237,7 @@ export default function DashboardPage() {
 
             {activeTab === "progress" && (
               <motion.div key="progress">
-                <ProgressChart /> {/* nuk i kalojmë plan, përdor mock data */}
+                <ProgressChart />
               </motion.div>
             )}
             {activeTab === "water" && (
@@ -199,7 +245,6 @@ export default function DashboardPage() {
                 <WaterTracker />
               </motion.div>
             )}
-
             {activeTab === "ai" && (
               <motion.div key="ai">
                 {plan ? (
