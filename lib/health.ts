@@ -3,6 +3,10 @@ import type { Profile } from "@/types/profile";
 export function calculateCalories(profile: Profile): number {
   const { weight, height, age, gender, activity_level, goal } = profile;
 
+  if (!weight || !height || !age || !gender || !activity_level || !goal) {
+    return 2000;
+  }
+
   const bmr =
     gender === "Male"
       ? 10 * weight + 6.25 * height - 5 * age + 5
@@ -21,10 +25,18 @@ export function calculateCalories(profile: Profile): number {
   if (goal === "Weight Loss") calories -= 400;
   if (goal === "Muscle Gain") calories += 300;
 
-  return Math.round(calories);
+  return Math.max(Math.round(calories), 1200);
 }
 
 export function calculateMacros(calories: number) {
+  if (!calories || calories <= 0) {
+    return {
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+    };
+  }
+
   return {
     protein: Math.round((calories * 0.3) / 4),
     carbs: Math.round((calories * 0.4) / 4),
