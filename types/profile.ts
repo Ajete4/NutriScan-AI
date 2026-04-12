@@ -1,5 +1,3 @@
-// types/profile.ts
-
 export type Gender = "Male" | "Female";
 
 export type DietType =
@@ -25,7 +23,6 @@ export type Goal =
 
 export interface Profile {
   id: string;
-  user_id: string;
   full_name: string;
   gender: Gender;
   age: number;
@@ -38,7 +35,10 @@ export interface Profile {
   intolerances: string | null;
   chronic_conditions: string | null;
   meal_frequency: number | null;
+  created_at?: string;
   updated_at: string;
+  target_weight?: number | null;
+  avatar_url?: string | null;
 }
 
 export interface AIPlan {
@@ -50,7 +50,6 @@ export interface AIPlan {
   created_at: string;
 }
 
-// AIResponse që kthen endpoint-i
 export interface AIResponse {
   daily_plan: string[];
   weekly_plan: string[];
