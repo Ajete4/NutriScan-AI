@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,14 +25,8 @@ import ProgressChart from "./components/ProgressChart";
 import MealScanner from "./components/MealScanner";
 
 import type { Profile } from "@/types/profile";
-import type { AIPlan } from "@/types/ai";
+import type { AIPlan, AIPlanData } from "@/types/ai";
 import { useUserProfile } from "../hooks/UseUserProfile";
-
-type AIResponse = {
-  daily_plan: string[];
-  weekly_plan: string[];
-  monthly_tips: string[];
-};
 
 type TabId = "dashboard" | "progress" | "water" | "ai";
 
@@ -45,11 +39,35 @@ export default function DashboardPage() {
     error: profileError,
   } = useUserProfile();
 
-  const [plan, setPlan] = useState<AIPlan | null>(null);
+  const [plan, setPlan] = useState<AIPlan | AIPlanData | null>(null);
+  const [plansHistory, setPlansHistory] = useState<AIPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<TabId>("dashboard");
   const [loadingPage, setLoadingPage] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [generatingPlan, setGeneratingPlan] = useState(false);
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const hasInitializedRef = useRef(false);
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showSuccessMessage = (message: string) => {
+    setSuccessMessage(message);
+
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+    }
+
+    successTimeoutRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,9 +76,25 @@ export default function DashboardPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (!user || !profile) return;
+    if (!user?.id) {
+      hasInitializedRef.current = false;
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || !profile || hasInitializedRef.current) return;
+
+    hasInitializedRef.current = true;
     initializeDashboard();
   }, [user, profile]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const initializeDashboard = async () => {
     setLoadingPage(true);
@@ -73,31 +107,34 @@ export default function DashboardPage() {
       }
 
       if (!profile.gender || !profile.goal || !profile.activity_level) {
-        setError("Profile is incomplete. Please update your information.");
+        setError("Your profile is incomplete. Please update your information first.");
         return;
       }
 
-      const { data: existingPlan, error: planError } = await supabase
+      const { data: existingPlans, error: planError } = await supabase
         .from("ai_plans")
         .select("*")
         .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
 
       if (planError) {
-        setError("Error loading AI plan.");
+        console.error("Error loading AI plans:", planError);
+        setError("We couldn't load your AI plans. Please try again.");
         return;
       }
 
-      if (existingPlan) {
-        setPlan(existingPlan as AIPlan);
+      if (existingPlans && existingPlans.length > 0) {
+        const typedPlans = existingPlans as AIPlan[];
+        setPlansHistory(typedPlans);
+        setPlan(typedPlans[0]);
+        setSelectedPlanId(typedPlans[0].id);
         return;
       }
 
       const aiData = await generateAIPlan(profile);
+
       if (!aiData) {
-        setError("AI plan could not be generated.");
+        setError("We couldn't generate your AI plan right now.");
         return;
       }
 
@@ -113,14 +150,18 @@ export default function DashboardPage() {
         .single();
 
       if (insertError) {
-        setError("Error saving AI plan.");
+        console.error("Error saving initial AI plan:", insertError);
+        setError("We generated your AI plan, but couldn't save it. Please try again.");
         return;
       }
 
-      setPlan(savedPlan as AIPlan);
+      const typedSavedPlan = savedPlan as AIPlan;
+      setPlan(typedSavedPlan);
+      setPlansHistory([typedSavedPlan]);
+      setSelectedPlanId(typedSavedPlan.id);
     } catch (err) {
       console.error("Dashboard error:", err);
-      setError("Unexpected dashboard error.");
+      setError("Something went wrong while loading your dashboard.");
     } finally {
       setLoadingPage(false);
     }
@@ -128,7 +169,7 @@ export default function DashboardPage() {
 
   const generateAIPlan = async (
     profile: Profile
-  ): Promise<AIResponse | null> => {
+  ): Promise<AIPlanData | null> => {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -137,7 +178,7 @@ export default function DashboardPage() {
       });
 
       if (res.status === 401) {
-        setError("Session expired. Please log in again.");
+        setError("Your session expired. Please log in again.");
         router.push("/login");
         return null;
       }
@@ -145,15 +186,125 @@ export default function DashboardPage() {
       if (!res.ok) {
         const errText = await res.text();
         console.error("AI error:", errText);
-        setError("Server did not respond correctly.");
+        setError("The AI service did not respond correctly.");
         return null;
       }
 
-      return (await res.json()) as AIResponse;
+      return (await res.json()) as AIPlanData;
     } catch (err) {
       console.error("AI fetch failed:", err);
-      setError("No internet connection. Please try again.");
+      setError("No internet connection or AI service unavailable. Please try again.");
       return null;
+    }
+  };
+
+  const handleGenerateNewPlan = async () => {
+    if (!profile || generatingPlan) return;
+
+    try {
+      setGeneratingPlan(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      const aiData = await generateAIPlan(profile);
+
+      if (!aiData) {
+        setError("We couldn't generate a new AI plan right now.");
+        return;
+      }
+
+      setPlan(aiData);
+      setSelectedPlanId(null);
+      showSuccessMessage("New AI plan generated successfully.");
+    } catch (err) {
+      console.error("Generate plan error:", err);
+      setError("Something went wrong while generating your AI plan.");
+    } finally {
+      setGeneratingPlan(false);
+    }
+  };
+
+  const handleSavePlan = async () => {
+    if (!user || !plan || savingPlan || selectedPlanId) return;
+
+    try {
+      setSavingPlan(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      const { data, error: insertError } = await supabase
+        .from("ai_plans")
+        .insert({
+          user_id: user.id,
+          daily_plan: plan.daily_plan,
+          weekly_plan: plan.weekly_plan,
+          monthly_tips: plan.monthly_tips,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("Save plan error:", insertError);
+        setError("We couldn't save your AI plan. Please try again.");
+        return;
+      }
+
+      const savedPlan = data as AIPlan;
+
+      setPlan(savedPlan);
+      setSelectedPlanId(savedPlan.id);
+      setPlansHistory((prev) => [savedPlan, ...prev]);
+      showSuccessMessage("AI plan saved successfully.");
+    } catch (err) {
+      console.error("Save plan exception:", err);
+      setError("Something went wrong while saving your AI plan.");
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const handleSelectPlan = (selectedPlan: AIPlan) => {
+    setPlan(selectedPlan);
+    setSelectedPlanId(selectedPlan.id);
+    setSuccessMessage(null);
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    try {
+      setDeletingPlanId(planId);
+      setError(null);
+      setSuccessMessage(null);
+
+      const { error: deleteError } = await supabase
+        .from("ai_plans")
+        .delete()
+        .eq("id", planId);
+
+      if (deleteError) {
+        console.error("Delete plan error:", deleteError);
+        setError("We couldn't delete your AI plan. Please try again.");
+        return;
+      }
+
+      const nextPlans = plansHistory.filter((p) => p.id !== planId);
+      setPlansHistory(nextPlans);
+
+      if (selectedPlanId === planId) {
+        if (nextPlans.length > 0) {
+          setPlan(nextPlans[0]);
+          setSelectedPlanId(nextPlans[0].id);
+        } else {
+          setPlan(null);
+          setSelectedPlanId(null);
+        }
+      }
+
+      showSuccessMessage("AI plan deleted successfully.");
+    } catch (err) {
+      console.error("Delete plan exception:", err);
+      setError("Something went wrong while deleting your AI plan.");
+    } finally {
+      setDeletingPlanId(null);
     }
   };
 
@@ -208,7 +359,10 @@ export default function DashboardPage() {
           </p>
 
           <button
-            onClick={() => initializeDashboard()}
+            onClick={() => {
+              hasInitializedRef.current = false;
+              initializeDashboard();
+            }}
             className="mt-4 px-4 py-2 rounded-2xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition"
           >
             Retry
@@ -220,7 +374,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#f7faf8] text-slate-900">
-      {/* Mobile Header */}
       <div className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
@@ -270,7 +423,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex">
-        {/* Desktop Sidebar */}
         <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-72 bg-white border-r border-slate-200 shadow-sm flex-col px-6 py-8">
           <div className="flex items-center gap-3 mb-10">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center text-white font-black shadow-md">
@@ -305,7 +457,9 @@ export default function DashboardPage() {
           </nav>
 
           <button
-            onClick={() => supabase.auth.signOut().then(() => router.push("/login"))}
+            onClick={() =>
+              supabase.auth.signOut().then(() => router.push("/login"))
+            }
             className="mt-auto flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition"
           >
             <LogOut size={18} />
@@ -313,11 +467,16 @@ export default function DashboardPage() {
           </button>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 lg:ml-72 min-h-screen">
           <TopBar profile={profile} />
 
           <div className="px-4 py-5 sm:px-6 md:px-8 lg:px-10 max-w-7xl mx-auto">
+            {successMessage && (
+              <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 font-semibold shadow-sm">
+                {successMessage}
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
               {activeTab === "dashboard" && (
                 <motion.div
@@ -369,17 +528,18 @@ export default function DashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                 >
-                  {plan ? (
-                    <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-[2rem] p-4 sm:p-6 shadow-sm">
-                      <AIRecommendations plan={plan} />
-                    </div>
-                  ) : (
-                    <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-[2rem] p-6 shadow-sm">
-                      <p className="text-violet-700 font-medium">
-                        AI plan is being generated or unavailable.
-                      </p>
-                    </div>
-                  )}
+                  <AIRecommendations
+                    plan={plan}
+                    plansHistory={plansHistory}
+                    selectedPlanId={selectedPlanId}
+                    generating={generatingPlan}
+                    saving={savingPlan}
+                    deletingPlanId={deletingPlanId}
+                    onGenerateNew={handleGenerateNewPlan}
+                    onSavePlan={handleSavePlan}
+                    onSelectPlan={handleSelectPlan}
+                    onDeletePlan={handleDeletePlan}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
