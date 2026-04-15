@@ -1,10 +1,9 @@
-// components/MealPlan.tsx
 "use client";
 
-import { AIPlan } from "@/types/ai";
+import type { AIPlan, AIPlanData } from "@/types/ai";
 
 type MealPlanProps = {
-  plan: AIPlan | null;
+  plan: AIPlan | AIPlanData | null;
 };
 
 export default function MealPlan({ plan }: MealPlanProps) {
@@ -17,33 +16,42 @@ export default function MealPlan({ plan }: MealPlanProps) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow">
-      <h3 className="text-lg font-bold mb-4">AI Meal Plan (Daily)</h3>
-      <ul className="space-y-2 mb-4">
-        {plan.daily_plan.map((meal, index) => (
-          <li key={index} className="text-gray-700">
-            <span className="font-semibold">Meal {index + 1}:</span> {meal}
-          </li>
-        ))}
-      </ul>
+    <div className="bg-white p-6 rounded-2xl shadow space-y-6">
+      <div>
+        <h3 className="text-lg font-bold mb-4">AI Meal Plan (Daily)</h3>
+        <ul className="space-y-3">
+          {plan.daily_plan.map((mealItem, index) => (
+            <li key={index} className="text-gray-700">
+              <span className="font-semibold">
+                {mealItem.meal}:
+              </span>{" "}
+              {mealItem.description}
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <h3 className="text-lg font-bold mb-4">AI Meal Plan (Weekly)</h3>
-      <ul className="space-y-2 mb-4">
-        {plan.weekly_plan.map((dayPlan, index) => (
-          <li key={index} className="text-gray-700">
-            <span className="font-semibold">Day {index + 1}:</span> {dayPlan}
-          </li>
-        ))}
-      </ul>
+      <div>
+        <h3 className="text-lg font-bold mb-4">AI Meal Plan (Weekly)</h3>
+        <ul className="space-y-2">
+          {plan.weekly_plan.map((dayPlan, index) => (
+            <li key={index} className="text-gray-700">
+              <span className="font-semibold">Day {index + 1}:</span> {dayPlan}
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <h3 className="text-lg font-bold mb-4">Monthly Tips</h3>
-      <ul className="space-y-2">
-        {plan.monthly_tips.map((tip, index) => (
-          <li key={index} className="text-gray-700">
-            • {tip}
-          </li>
-        ))}
-      </ul>
+      <div>
+        <h3 className="text-lg font-bold mb-4">Monthly Tips</h3>
+        <ul className="space-y-2">
+          {plan.monthly_tips.map((tip, index) => (
+            <li key={index} className="text-gray-700">
+              • {tip}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
