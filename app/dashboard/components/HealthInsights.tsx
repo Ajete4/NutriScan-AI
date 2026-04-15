@@ -105,3 +105,5 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
     </div>
   );
 }
+
+
