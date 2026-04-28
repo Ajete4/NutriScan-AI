@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 
+
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -51,7 +52,6 @@ export default function DashboardPage() {
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [savingPlan, setSavingPlan] = useState(false);
   const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
-
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const hasInitializedRef = useRef(false);
