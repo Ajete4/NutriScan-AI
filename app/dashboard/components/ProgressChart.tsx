@@ -218,7 +218,7 @@ export default function ProgressChart() {
 
   if (loading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+      <div className="wellness-surface rounded-[2rem] p-6">
         <p className="text-slate-500 font-medium">Loading progress...</p>
       </div>
     );
@@ -233,17 +233,19 @@ export default function ProgressChart() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-        <div className="flex flex-col gap-5">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 relative overflow-hidden">
+        <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-[#dff5df]/75 blur-3xl" />
+        <div className="absolute -left-20 bottom-8 h-52 w-52 rounded-full bg-[#fff3e2]/70 blur-3xl" />
+        <div className="relative flex flex-col gap-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
+              <div className="inline-flex items-center gap-2 bg-[#fff3e2] border border-[#f8d5c9] text-[#bd625c] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
                 <BarChart3 size={14} />
                 Progress Analytics
               </div>
 
-              <h3 className="text-2xl font-black text-slate-900 mt-3">
+              <h3 className="text-3xl sm:text-4xl font-black text-slate-950 mt-3 tracking-tight">
                 Nutrition Progress
               </h3>
 
@@ -252,13 +254,13 @@ export default function ProgressChart() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
               {periodOptions.map((option) => (
                 <button
                   key={option.id}
                   onClick={() => setPeriod(option.id)}
-                  className={`px-4 py-2 rounded-2xl text-sm font-semibold border transition ${period === option.id
-                      ? "bg-gradient-to-r from-emerald-50 to-sky-50 text-slate-900 border-emerald-100 shadow-sm"
+                  className={`px-4 py-2 rounded-2xl text-sm font-bold border transition hover:-translate-y-0.5 focus-ring ${period === option.id
+                      ? "bg-gradient-to-r from-[#5f7f3a] to-[#8fa58a] text-white border-[#5f7f3a] shadow-lg shadow-[#5f7f3a]/15"
                       : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                     }`}
                 >
@@ -269,9 +271,9 @@ export default function ProgressChart() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
-                <Flame size={16} className="text-orange-500" />
+                <Flame size={16} className="text-[#f28f7c]" />
                 Total
               </div>
               <p className="text-2xl font-black text-slate-900 mt-2">
@@ -280,9 +282,9 @@ export default function ProgressChart() {
               <p className="text-sm text-slate-400">kcal</p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
-                <CalendarDays size={16} className="text-sky-500" />
+                <CalendarDays size={16} className="text-[#8fa58a]" />
                 Average
               </div>
               <p className="text-2xl font-black text-slate-900 mt-2">
@@ -291,9 +293,9 @@ export default function ProgressChart() {
               <p className="text-sm text-slate-400">kcal</p>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
-                <TrendingUp size={16} className="text-emerald-500" />
+                <TrendingUp size={16} className="text-[#5f7f3a]" />
                 Highest
               </div>
               <p className="text-2xl font-black text-slate-900 mt-2">
@@ -303,13 +305,13 @@ export default function ProgressChart() {
             </div>
           </div>
 
-          <div className="h-[320px] w-full pt-2">
-            <ResponsiveContainer width="100%" height={320}>
+          <div className="h-[280px] sm:h-[340px] w-full pt-2 overflow-hidden rounded-[1.5rem] border border-[#edf1e8] bg-white/55 p-2 shadow-inner">
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="progressFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.03} />
+                    <stop offset="5%" stopColor="#5f7f3a" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#5f7f3a" stopOpacity={0.03} />
                   </linearGradient>
                 </defs>
 
@@ -345,7 +347,7 @@ export default function ProgressChart() {
                 <Area
                   type="monotone"
                   dataKey="calories"
-                  stroke="#10b981"
+                  stroke="#5f7f3a"
                   strokeWidth={3}
                   fill="url(#progressFill)"
                   activeDot={{ r: 6 }}

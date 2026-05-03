@@ -5,10 +5,11 @@ import type { Profile } from "@/types/profile";
 import { supabase } from "@/lib/supabaseClient";
 import { calculateCalories, calculateMacros } from "@/lib/health";
 import { motion } from "framer-motion";
-import { Flame, Target, UtensilsCrossed } from "lucide-react";
+import { Beef, Flame, Leaf, LucideIcon, Sparkles, Sprout, Wheat } from "lucide-react";
 
 interface DailyStatsProps {
   profile: Profile;
+  refreshKey?: number;
 }
 
 interface MealLog {
@@ -29,28 +30,25 @@ interface MacroCardProps {
   consumed: number;
   target: number;
   unit: string;
-  icon: string;
-  tone: "emerald" | "sky" | "amber";
+  icon: LucideIcon;
+  tone: "avocado" | "sage" | "coral";
 }
 
 const toneStyles = {
-  emerald: {
-    badge: "bg-emerald-50 text-emerald-700 border border-emerald-100",
-    progress: "bg-emerald-500",
-    soft: "bg-emerald-100",
-    text: "text-emerald-700",
+  avocado: {
+    badge: "bg-[#dff5df] text-[#5f7f3a] border border-[#bcd3b1]",
+    progress: "bg-[#5f7f3a]",
+    text: "text-[#5f7f3a]",
   },
-  sky: {
-    badge: "bg-sky-50 text-sky-700 border border-sky-100",
-    progress: "bg-sky-500",
-    soft: "bg-sky-100",
-    text: "text-sky-700",
+  sage: {
+    badge: "bg-[#e5ecdf] text-[#71806b] border border-[#cfdac8]",
+    progress: "bg-[#8fa58a]",
+    text: "text-[#71806b]",
   },
-  amber: {
-    badge: "bg-amber-50 text-amber-700 border border-amber-100",
-    progress: "bg-amber-500",
-    soft: "bg-amber-100",
-    text: "text-amber-700",
+  coral: {
+    badge: "bg-[#fff3e2] text-[#bd625c] border border-[#f8d5c9]",
+    progress: "bg-[#f28f7c]",
+    text: "text-[#bd625c]",
   },
 };
 
@@ -59,7 +57,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
   consumed,
   target,
   unit,
-  icon,
+  icon: Icon,
   tone,
 }) => {
   const percentage =
@@ -70,25 +68,27 @@ const MacroCard: React.FC<MacroCardProps> = ({
   return (
     <motion.div
       whileHover={{ y: -3 }}
-      className="bg-white border border-slate-200 rounded-[2rem] p-5 shadow-sm hover:shadow-md transition"
+      className="wellness-surface premium-hover rounded-[1.75rem] p-4 sm:p-5 transition-all duration-300"
     >
       <div className="flex items-start justify-between gap-4">
-        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl ${styles.badge}`}>
-          {icon}
+        <div
+          className={`w-11 h-11 rounded-2xl flex items-center justify-center ${styles.badge}`}
+        >
+          <Icon size={20} />
         </div>
 
-        <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full">
+        <span className="text-[11px] font-black text-slate-500 bg-white/80 border border-slate-100 px-2.5 py-1 rounded-full">
           {percentage}%
         </span>
       </div>
 
       <div className="mt-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
           {label}
         </p>
 
         <div className="mt-1 flex items-end gap-2">
-          <span className="text-3xl font-black tracking-tight text-slate-900">
+          <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">
             {Math.round(consumed)}
           </span>
           <span className="text-sm font-semibold text-slate-400 mb-1">
@@ -98,7 +98,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
 
         <p className="text-sm text-slate-500 mt-1">
           Goal:{" "}
-          <span className={`font-semibold ${styles.text}`}>
+          <span className={`font-bold ${styles.text}`}>
             {Math.round(target)} {unit}
           </span>
         </p>
@@ -118,7 +118,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
   );
 };
 
-export default function DailyStats({ profile }: DailyStatsProps) {
+export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps) {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [loadingMeals, setLoadingMeals] = useState(true);
   const [mealError, setMealError] = useState<string | null>(null);
@@ -158,18 +158,20 @@ export default function DailyStats({ profile }: DailyStatsProps) {
     };
 
     fetchTodayMeals();
-  }, [profile.id]);
+  }, [profile.id, refreshKey]);
 
   const targetCalories = useMemo(() => {
     return Math.round(Number(calculateCalories(profile)) || 2000);
   }, [profile]);
 
   const macroTargets = useMemo(() => {
-    return calculateMacros(targetCalories) || {
-      protein: 0,
-      carbs: 0,
-      fats: 0,
-    };
+    return (
+      calculateMacros(targetCalories) || {
+        protein: 0,
+        carbs: 0,
+        fats: 0,
+      }
+    );
   }, [targetCalories]);
 
   const totals = useMemo(() => {
@@ -194,7 +196,7 @@ export default function DailyStats({ profile }: DailyStatsProps) {
 
   if (loadingMeals) {
     return (
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+      <div className="wellness-surface rounded-[2rem] p-6">
         <p className="text-slate-500 font-medium">
           Loading daily nutrition stats...
         </p>
@@ -211,38 +213,45 @@ export default function DailyStats({ profile }: DailyStatsProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-200 rounded-[2rem] p-6 md:p-7 shadow-sm"
+        className="wellness-surface premium-card rounded-[2.25rem] p-5 sm:p-7 md:p-8 relative overflow-hidden"
       >
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="absolute -right-12 -top-16 h-64 w-64 rounded-full bg-[#dff5df]/80 blur-3xl" />
+        <div className="absolute -bottom-20 left-12 h-56 w-56 rounded-full bg-[#fff3e2]/80 blur-3xl" />
+        <div className="absolute right-6 top-6 hidden h-24 w-24 rounded-[2rem] border border-white/60 bg-white/30 rotate-12 lg:block" />
+
+        <div className="relative flex flex-col gap-7">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 border border-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#fff3e2] border border-[#f8d5c9] px-3 py-1 text-xs font-black text-[#bd625c] uppercase tracking-[0.14em]">
                 <Flame size={14} />
                 Daily Energy
               </div>
 
-              <div className="mt-4 flex flex-wrap items-end gap-3">
-                <span className="text-3xl md:text-3xl font-semibold tracking-tight text-slate-900">
+              <div className="mt-5 flex flex-wrap items-end gap-3">
+                <span className="text-5xl sm:text-6xl font-black tracking-tight text-slate-950">
                   {consumedCalories}
                 </span>
-                <span className="text-3xl md:text-3xl font-semibold tracking-tight text-slate-900">
+                <span className="pb-1 text-2xl sm:text-4xl font-black tracking-tight text-slate-900">
                   / {targetCalories} kcal
                 </span>
               </div>
 
               <p className="mt-2 text-sm md:text-base text-slate-500 font-medium">
-                You’ve reached{" "}
-                <span className="text-emerald-900 font-bold">{progress}%</span>{" "}
-                of today’s calorie target.
+                You have reached{" "}
+                <span className="text-[#5f7f3a] font-bold">{progress}%</span>{" "}
+                of today&apos;s calorie target.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 min-w-[130px]">
+              <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] px-4 py-3 min-w-[140px] shadow-lg shadow-slate-900/5">
+                <div className="mb-2 h-8 w-8 rounded-xl bg-[#fff8ea] text-[#71806b] flex items-center justify-center">
+                  <Leaf size={15} />
+                </div>
                 <p className="text-[11px] uppercase tracking-wide font-bold text-slate-400">
                   Meals
                 </p>
@@ -251,11 +260,14 @@ export default function DailyStats({ profile }: DailyStatsProps) {
                 </p>
               </div>
 
-              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-3 min-w-[130px]">
-                <p className="text-[11px] uppercase tracking-wide font-bold text-emerald-600">
+              <div className="bg-[#dff5df] border border-[#bcd3b1] rounded-[1.35rem] px-4 py-3 min-w-[140px] shadow-lg shadow-[#5f7f3a]/10">
+                <div className="mb-2 h-8 w-8 rounded-xl bg-white/70 text-[#5f7f3a] flex items-center justify-center">
+                  <Sparkles size={15} />
+                </div>
+                <p className="text-[11px] uppercase tracking-wide font-bold text-[#5f7f3a]">
                   Left
                 </p>
-                <p className="text-xl font-black text-emerald-700 mt-1">
+                <p className="text-xl font-black text-[#5f7f3a] mt-1">
                   {caloriesLeft}
                 </p>
               </div>
@@ -268,26 +280,26 @@ export default function DailyStats({ profile }: DailyStatsProps) {
               <span>Goal: {targetCalories} kcal</span>
             </div>
 
-            <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
+            <div className="h-4 w-full rounded-full bg-white/80 overflow-hidden shadow-inner border border-[#edf1e8]">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 1.1, ease: "easeOut" }}
-                className="h-full rounded-full bg-gradient-to-r from-orange-400 via-emerald-500 to-teal-500"
+                className="h-full rounded-full bg-gradient-to-r from-[#f28f7c] via-[#8fa58a] to-[#5f7f3a] shadow-[0_0_22px_rgba(95,127,58,0.28)]"
               />
             </div>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <MacroCard
           label="Protein"
           consumed={totals.protein}
           target={macroTargets.protein}
           unit="g"
-          icon="🥩"
-          tone="emerald"
+          icon={Beef}
+          tone="avocado"
         />
 
         <MacroCard
@@ -295,8 +307,8 @@ export default function DailyStats({ profile }: DailyStatsProps) {
           consumed={totals.carbs}
           target={macroTargets.carbs}
           unit="g"
-          icon="🍞"
-          tone="sky"
+          icon={Wheat}
+          tone="sage"
         />
 
         <MacroCard
@@ -304,11 +316,10 @@ export default function DailyStats({ profile }: DailyStatsProps) {
           consumed={totals.fats}
           target={macroTargets.fats}
           unit="g"
-          icon="🥑"
-          tone="amber"
+          icon={Sprout}
+          tone="coral"
         />
       </div>
-
     </div>
   );
 }

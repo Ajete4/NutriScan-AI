@@ -10,11 +10,37 @@ import toast, { Toaster } from "react-hot-toast";
 
 const cardStyles = {
   base: "relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden",
-  inactive: "border-gray-100 bg-gray-50/50 text-gray-400 hover:bg-gray-100",
-  active: "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm",
+  inactive: "border-slate-200 bg-[#fff8ea]/70 text-slate-500 hover:bg-white hover:border-[#bcd3b1]",
+  active: "border-[#5f7f3a] bg-[#dff5df] text-[#3b4f23] shadow-sm",
 };
 
-export default function ProfilesCRUD() {
+const dietOptions: DietType[] = [
+  "Omnivore",
+  "Vegan",
+  "Vegetarian",
+  "Keto",
+  "Paleo",
+  "Gluten-Free",
+];
+
+const goalOptions: Goal[] = [
+  "Weight Loss",
+  "Maintenance",
+  "Muscle Gain",
+  "Sports Performance",
+];
+
+const isNumberInRange = (value: unknown, min: number, max: number) =>
+  typeof value === "number" &&
+  Number.isFinite(value) &&
+  value >= min &&
+  value <= max;
+
+interface ProfilesCRUDProps {
+  onProfileUpdated?: (profile: Profile) => void;
+}
+
+export default function ProfilesCRUD({ onProfileUpdated }: ProfilesCRUDProps) {
   const [loading, setLoading] = useState<boolean>(false);
   const [form, setForm] = useState<Partial<Profile>>({
     full_name: "",
@@ -52,6 +78,30 @@ export default function ProfilesCRUD() {
       return;
     }
 
+    if (!isNumberInRange(form.age, 13, 100)) {
+      toast.error("Please enter an age between 13 and 100.");
+      setLoading(false);
+      return;
+    }
+
+    if (!isNumberInRange(form.height, 50, 250)) {
+      toast.error("Please enter a height between 50 and 250 cm.");
+      setLoading(false);
+      return;
+    }
+
+    if (!isNumberInRange(form.weight, 20, 300)) {
+      toast.error("Please enter a weight between 20 and 300 kg.");
+      setLoading(false);
+      return;
+    }
+
+    if (!isNumberInRange(form.meal_frequency, 1, 6)) {
+      toast.error("Please enter a meal frequency between 1 and 6.");
+      setLoading(false);
+      return;
+    }
+
     // Edge Case: Chronic conditions too long
     if (form.chronic_conditions && form.chronic_conditions.length > 500) {
       toast.error("Allergies / medical conditions input is too long. Max 500 characters.");
@@ -63,35 +113,41 @@ export default function ProfilesCRUD() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated.");
 
-      const { error } = await supabase.from("profiles").upsert([{
-        id: user.id,
-        ...form,
-        updated_at: new Date().toISOString(),
-      }]);
+      const { data, error } = await supabase
+        .from("profiles")
+        .upsert([{
+          id: user.id,
+          ...form,
+          updated_at: new Date().toISOString(),
+        }])
+        .select("*")
+        .single();
 
       if (error) throw error;
 
+      const updatedProfile = data as Profile;
+      setForm(updatedProfile);
+      onProfileUpdated?.(updatedProfile);
       toast.success("Profile updated successfully!");
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (err) {
+    } catch {
       toast.error("Error saving profile. Please try again.");
     }
 
     setLoading(false);
   }
 
-  const labelClasses = "flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase mb-3 ml-1 tracking-widest";
-  const inputClasses = "w-full px-5 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-800 font-bold focus:bg-white focus:border-emerald-500 outline-none transition-all";
+  const labelClasses = "flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase mb-3 ml-1 tracking-widest";
+  const inputClasses = "w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-[#fff8ea]/70 border border-slate-200 text-slate-800 font-bold focus:bg-white focus:border-[#8fa58a] outline-none transition-all";
 
   return (
     <>
       {/* Toaster for alerts */}
       <Toaster position="top-right" reverseOrder={false} />
 
-      <form onSubmit={handleSave} className="space-y-8">
+      <form onSubmit={handleSave} className="space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4 p-5 bg-slate-900 rounded-[2rem] text-white">
-          <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+        <div className="flex items-center gap-4 p-4 sm:p-5 bg-gradient-to-br from-[#3b4f23] to-[#5f7f3a] rounded-3xl text-white">
+          <div className="w-12 h-12 bg-[#f28f7c] rounded-2xl flex items-center justify-center shadow-lg shadow-[#f28f7c]/20">
             <Sparkles size={22} />
           </div>
           <div>
@@ -117,7 +173,7 @@ export default function ProfilesCRUD() {
         </div>
 
         {/* Physical Metrics */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Weight */}
           <div>
             <label className={labelClasses}><Scale size={14} /> Weight (kg)</label>
@@ -125,14 +181,7 @@ export default function ProfilesCRUD() {
               type="number"
               className={inputClasses}
               value={form.weight || ""}
-              onChange={e => {
-                let weight = Number(e.target.value);
-                if (weight <= 0) {
-                  toast.error("Weight must be greater than 0.");
-                  weight = 1;
-                }
-                setForm({ ...form, weight });
-              }}
+              onChange={e => setForm({ ...form, weight: Number(e.target.value) })}
             />
           </div>
 
@@ -143,14 +192,7 @@ export default function ProfilesCRUD() {
               type="number"
               className={inputClasses}
               value={form.height || ""}
-              onChange={e => {
-                let height = Number(e.target.value);
-                if (height <= 0) {
-                  toast.error("Height must be greater than 0.");
-                  height = 50;
-                }
-                setForm({ ...form, height });
-              }}
+              onChange={e => setForm({ ...form, height: Number(e.target.value) })}
             />
           </div>
 
@@ -163,17 +205,10 @@ export default function ProfilesCRUD() {
               value={form.age || ""}
               onChange={e => {
                 const inputValue = e.target.value;
-                let age = Number(inputValue);
-                if (!inputValue || isNaN(age)) {
+                const age = Number(inputValue);
+                if (!inputValue || Number.isNaN(age)) {
                   setForm({ ...form, age: 0 });
                   return;
-                }
-                if (age < 1) {
-                  toast.error("Age must be at least 1 year.");
-                  age = 1;
-                } else if (age > 120) {
-                  toast.error("Age cannot exceed 120 years.");
-                  age = 120;
                 }
                 setForm({ ...form, age });
               }}
@@ -185,8 +220,8 @@ export default function ProfilesCRUD() {
         {/* Diet Selection */}
         <div>
           <label className={labelClasses}><Utensils size={14} /> Dietary Regime</label>
-          <div className="grid grid-cols-2 gap-3">
-            {(["Omnivore", "Vegan", "Vegetarian", "Keto"] as DietType[]).map(type => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {dietOptions.map(type => (
               <div
                 key={type}
                 onClick={() => setForm({ ...form, diet_type: type })}
@@ -203,7 +238,7 @@ export default function ProfilesCRUD() {
         <div>
           <label className={labelClasses}><Activity size={14} /> Primary Goal</label>
           <div className="grid grid-cols-1 gap-3">
-            {(["Weight Loss", "Maintenance", "Muscle Gain"] as Goal[]).map(g => (
+            {goalOptions.map(g => (
               <div
                 key={g}
                 onClick={() => setForm({ ...form, goal: g })}
@@ -217,22 +252,22 @@ export default function ProfilesCRUD() {
         </div>
 
         {/* Meal Frequency */}
-        <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xl shadow-emerald-100">
+        <div className="p-5 sm:p-8 rounded-3xl bg-gradient-to-br from-[#5f7f3a] to-[#8fa58a] text-white shadow-xl shadow-[#bcd3b1]">
           <label className="flex items-center gap-2 text-[10px] font-black uppercase mb-6 tracking-[0.2em] opacity-80">
             <Utensils size={14} /> Meal Frequency
           </label>
           <input
-            type="range" min="1" max="8"
+            type="range" min="1" max="6"
             className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-white mb-6"
             value={form.meal_frequency || 3}
             onChange={e => setForm({ ...form, meal_frequency: Number(e.target.value) })}
           />
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <span className="text-[10px] font-bold opacity-60 uppercase">1 Meal</span>
             <div className="bg-white/20 px-6 py-2 rounded-2xl text-xs font-black tracking-widest uppercase">
               {form.meal_frequency} Meals Per Day
             </div>
-            <span className="text-[10px] font-bold opacity-60 uppercase">8 Meals</span>
+            <span className="text-[10px] font-bold opacity-60 uppercase">6 Meals</span>
           </div>
         </div>
 
@@ -262,9 +297,9 @@ export default function ProfilesCRUD() {
         <button
           type="submit"
           disabled={loading}
-          className="group relative w-full h-20 overflow-hidden rounded-[2rem] bg-slate-900 font-black text-white transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+          className="group relative w-full h-16 sm:h-20 overflow-hidden rounded-3xl bg-slate-900 font-black text-white transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
         >
-          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-0 flex items-center justify-center gap-3 bg-gradient-to-r from-[#5f7f3a] to-[#f28f7c] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Save size={20} />
             <span className="tracking-widest uppercase text-xs">Update Profile</span>
           </div>

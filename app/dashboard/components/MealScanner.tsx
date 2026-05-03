@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/app/context/AuthContext";
@@ -23,7 +24,11 @@ type MealAnalysis = {
   fats: number;
 };
 
-export default function MealScanner() {
+type MealScannerProps = {
+  onMealSaved?: () => void;
+};
+
+export default function MealScanner({ onMealSaved }: MealScannerProps) {
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -167,9 +172,19 @@ export default function MealScanner() {
       setAnalyzing(true);
       resetMessages();
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        setError("Your session expired. Please log in again.");
+        return;
+      }
+
       const res = await fetch("/api/analyze-meal", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -177,10 +192,21 @@ export default function MealScanner() {
         }),
       });
 
-      const data = await res.json();
+      if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") || "60";
+        setError(`Too many requests. Please wait ${retryAfter} seconds.`);
+        return;
+      }
+
+      const data = await res
+        .json()
+        .catch(() => ({ error: "AI service returned an unreadable response." }));
 
       if (!res.ok) {
-        setError(data.error || "AI analysis failed.");
+        setError(
+          data.error ||
+            "We couldn't analyze this meal right now. Please try another photo."
+        );
         return;
       }
 
@@ -188,7 +214,7 @@ export default function MealScanner() {
       setSuccessMessage("AI analysis completed successfully.");
     } catch (err) {
       console.error("Analyze error:", err);
-      setError("Failed to analyze meal. Please try again.");
+      setError("Network issue while analyzing the meal. Please try again.");
     } finally {
       setAnalyzing(false);
     }
@@ -229,6 +255,7 @@ export default function MealScanner() {
       }
 
       setSuccessMessage("Meal saved successfully.");
+      onMealSaved?.();
 
       clearScannerState();
 
@@ -244,15 +271,17 @@ export default function MealScanner() {
   };
 
   return (
-    <div className="self-start bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="self-start wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 space-y-5 sm:space-y-6 relative overflow-hidden">
+      <div className="absolute -right-12 top-0 h-56 w-56 rounded-full bg-[#f8d5c9]/65 blur-3xl" />
+      <div className="absolute -left-16 bottom-16 h-44 w-44 rounded-full bg-[#dff5df]/60 blur-3xl" />
+      <div className="relative flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold">
+          <div className="inline-flex items-center gap-2 bg-[#fff3e2] border border-[#f8d5c9] text-[#bd625c] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
             <Sparkles size={14} />
             AI Scanner
           </div>
 
-          <h3 className="text-xl font-black text-slate-900 mt-3">
+          <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-3 tracking-tight">
             Scan your meal
           </h3>
 
@@ -260,16 +289,16 @@ export default function MealScanner() {
             Upload a meal photo and let AI estimate calories and macros
           </p>
 
-          <div className="flex gap-2 text-xs font-semibold text-slate-400 mt-3 flex-wrap">
-            <span className={selectedFile ? "text-emerald-600" : ""}>
+          <div className="flex gap-2 text-[11px] font-black text-slate-400 mt-4 flex-wrap uppercase tracking-[0.12em]">
+            <span className={selectedFile ? "text-[#5f7f3a]" : ""}>
               1. Upload
             </span>
-            <span>→</span>
-            <span className={uploadedImageUrl ? "text-emerald-600" : ""}>
+            <span>/</span>
+            <span className={uploadedImageUrl ? "text-[#5f7f3a]" : ""}>
               2. Analyze
             </span>
-            <span>→</span>
-            <span className={analysis ? "text-emerald-600" : ""}>
+            <span>/</span>
+            <span className={analysis ? "text-[#5f7f3a]" : ""}>
               3. Save
             </span>
           </div>
@@ -278,7 +307,7 @@ export default function MealScanner() {
         <button
           onClick={handleChooseImage}
           disabled={uploading || analyzing || saving}
-          className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition disabled:opacity-70"
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#5f7f3a] text-white font-bold hover:bg-[#4d6b2f] hover:-translate-y-0.5 shadow-xl shadow-[#5f7f3a]/20 transition disabled:opacity-70 w-full sm:w-auto focus-ring"
         >
           <Camera size={18} />
           Add
@@ -297,10 +326,10 @@ export default function MealScanner() {
       {!previewUrl && (
         <div
           onClick={handleChooseImage}
-          className="border-2 border-dashed border-slate-200 rounded-[2rem] p-10 text-center cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/20 transition"
+          className="group border-2 border-dashed border-[#bcd3b1] rounded-[2rem] p-6 sm:p-10 text-center cursor-pointer bg-white/75 hover:border-[#8fa58a] hover:bg-[#dff5df]/50 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-[#5f7f3a]/10 transition-all duration-300"
         >
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <ImageIcon size={24} className="text-slate-400" />
+          <div className="w-16 h-16 mx-auto rounded-[1.35rem] bg-[#dff5df] flex items-center justify-center mb-4 shadow-lg shadow-[#5f7f3a]/10 transition-transform group-hover:scale-105">
+            <ImageIcon size={24} className="text-[#5f7f3a]" />
           </div>
 
           <p className="font-semibold text-slate-700">
@@ -314,11 +343,14 @@ export default function MealScanner() {
 
       {previewUrl && (
         <div className="space-y-4">
-          <div className="relative overflow-hidden rounded-[2rem] border border-slate-200">
-            <img
+          <div className="relative overflow-hidden rounded-3xl border border-[#dcebd1] bg-slate-100 shadow-2xl shadow-[#5f7f3a]/15">
+            <Image
               src={previewUrl}
               alt="Meal preview"
-              className="w-full h-[260px] object-cover"
+              width={960}
+              height={720}
+              unoptimized
+              className="w-full aspect-[4/3] max-h-[320px] object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
@@ -332,11 +364,11 @@ export default function MealScanner() {
             )}
           </div>
 
-          <div className="flex gap-3 flex-wrap">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={handleChooseImage}
               disabled={uploading || analyzing || saving}
-              className="px-4 py-3 rounded-2xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-70"
+              className="px-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-70 focus-ring"
             >
               Change
             </button>
@@ -344,7 +376,7 @@ export default function MealScanner() {
             <button
               onClick={handleRemoveImage}
               disabled={uploading || analyzing || saving}
-              className="flex items-center gap-2 px-4 py-3 rounded-2xl border border-red-200 text-red-600 font-semibold hover:bg-red-50 transition disabled:opacity-70"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-red-200 bg-white text-red-600 font-semibold hover:bg-red-50 transition disabled:opacity-70 focus-ring"
             >
               <X size={18} />
               Remove
@@ -353,7 +385,7 @@ export default function MealScanner() {
             <button
               onClick={handleUpload}
               disabled={!selectedFile || uploading || analyzing || saving}
-              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition disabled:opacity-70"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-950 text-white font-semibold hover:bg-slate-800 transition disabled:opacity-70 focus-ring"
             >
               {uploading ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -367,7 +399,7 @@ export default function MealScanner() {
               <button
                 onClick={handleAnalyze}
                 disabled={analyzing || uploading || saving}
-                className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition disabled:opacity-70"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#f28f7c] text-white font-semibold hover:bg-[#df7b69] shadow-lg shadow-[#f28f7c]/20 transition disabled:opacity-70 sm:col-span-2 focus-ring"
               >
                 {analyzing ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -388,32 +420,32 @@ export default function MealScanner() {
       )}
 
       {successMessage && (
-        <div className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-3 rounded-2xl text-sm font-medium">
+        <div className="bg-[#dff5df] border border-[#bcd3b1] text-[#5f7f3a] px-4 py-3 rounded-2xl text-sm font-medium">
           {successMessage}
         </div>
       )}
 
       {analysis && (
-        <div className="bg-violet-50 border border-violet-100 rounded-[2rem] p-5 space-y-4">
-          <div className="flex items-center gap-2 text-violet-700 font-bold">
+        <div className="bg-[#fff3e2]/90 border border-[#f8d5c9] rounded-[1.75rem] p-4 sm:p-5 space-y-4">
+          <div className="flex items-center gap-2 text-[#bd625c] font-bold">
             <Brain size={18} />
             AI Result
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-2xl p-4 border border-violet-100 col-span-2">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9] col-span-2">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Meal
               </p>
               <p className="text-lg font-black text-slate-900 mt-1">
                 {analysis.meal_name}
               </p>
-              <p className="text-sm text-violet-700 font-semibold mt-1 capitalize">
+              <p className="text-sm text-[#bd625c] font-semibold mt-1 capitalize">
                 {analysis.meal_type}
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border border-violet-100">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9]">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Calories
               </p>
@@ -422,7 +454,7 @@ export default function MealScanner() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border border-violet-100">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9]">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Protein
               </p>
@@ -431,7 +463,7 @@ export default function MealScanner() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border border-violet-100">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9]">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Carbs
               </p>
@@ -440,7 +472,7 @@ export default function MealScanner() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 border border-violet-100">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9]">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Fats
               </p>
@@ -454,7 +486,7 @@ export default function MealScanner() {
             <button
               onClick={handleSaveMeal}
               disabled={!analysis || saving || uploading || analyzing}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#5f7f3a] text-white font-semibold hover:bg-[#4d6b2f] shadow-lg shadow-[#5f7f3a]/20 transition disabled:opacity-70 focus-ring"
             >
               {saving ? (
                 <Loader2 size={18} className="animate-spin" />

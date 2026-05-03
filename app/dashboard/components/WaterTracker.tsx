@@ -3,18 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/app/context/AuthContext";
-
 import {
+  CheckCircle2,
   Droplets,
-  Plus,
   Minus,
+  Plus,
+  Sparkles,
   Trophy,
   Waves,
-  Sparkles,
-  CheckCircle2,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUserProfile } from "../../hooks/UseUserProfile"; 
+import { useUserProfile } from "../../hooks/UseUserProfile";
 
 type WaterLog = {
   id: string;
@@ -37,9 +36,7 @@ export default function WaterTracker() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const today = useMemo(() => {
-    return new Date().toISOString().split("T")[0];
-  }, []);
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const targetMl = useMemo(() => {
     if (profile?.weight && profile.weight > 0) {
@@ -141,7 +138,7 @@ export default function WaterTracker() {
 
   if (loading) {
     return (
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+      <div className="wellness-surface rounded-[2rem] p-6">
         <p className="text-slate-500 font-medium">Loading hydration data...</p>
       </div>
     );
@@ -156,46 +153,49 @@ export default function WaterTracker() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-6 items-start">
+    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6 items-start">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-200 rounded-[2rem] p-6 md:p-7 shadow-sm"
+          className="wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 md:p-7 relative overflow-hidden"
         >
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-[#e5ecdf]/90 blur-3xl" />
+          <div className="absolute -left-20 bottom-10 h-52 w-52 rounded-full bg-[#dff5df]/70 blur-3xl" />
+
+          <div className="relative space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-100 text-sky-700 px-3 py-1 rounded-full text-xs font-bold">
+                <div className="inline-flex items-center gap-2 bg-[#e5ecdf] border border-[#cfdac8] text-[#71806b] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
                   <Droplets size={14} />
                   Hydration Tracker
                 </div>
 
-                <h3 className="text-2xl font-black text-slate-900 mt-3">
+                <h3 className="text-3xl sm:text-4xl font-black text-slate-950 mt-3 tracking-tight">
                   Water Intake
                 </h3>
 
                 <p className="text-sm text-slate-500 mt-1">
-                  Stay hydrated and track your daily water goal
+                  Stay hydrated and track your daily water goal.
                 </p>
               </div>
 
               <div
-                className={`rounded-2xl px-5 py-4 text-right min-w-[160px] border ${
+                className={`rounded-[1.35rem] px-5 py-4 text-left sm:text-right w-full sm:w-auto min-w-[170px] border shadow-xl shadow-slate-900/5 ${
                   isGoalReached
-                    ? "bg-emerald-50 border-emerald-100"
-                    : "bg-sky-50 border-sky-100"
+                    ? "bg-[#dff5df] border-[#bcd3b1]"
+                    : "bg-[#e5ecdf] border-[#cfdac8]"
                 }`}
               >
                 <p
                   className={`text-2xl font-black ${
-                    isGoalReached ? "text-emerald-700" : "text-sky-700"
+                    isGoalReached ? "text-[#5f7f3a]" : "text-[#71806b]"
                   }`}
                 >
                   {totalMl}
                   <span
                     className={`text-xs ml-1 font-bold ${
-                      isGoalReached ? "text-emerald-500" : "text-sky-500"
+                      isGoalReached ? "text-[#5f7f3a]" : "text-[#71806b]"
                     }`}
                   >
                     ml
@@ -213,42 +213,42 @@ export default function WaterTracker() {
                 <span>Goal: {targetMl} ml</span>
               </div>
 
-              <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-4 w-full rounded-full bg-white/80 overflow-hidden shadow-inner border border-[#edf1e8]">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                   className={`h-full rounded-full ${
                     isGoalReached
-                      ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-green-500"
-                      : "bg-gradient-to-r from-sky-400 via-sky-500 to-cyan-500"
+                      ? "bg-gradient-to-r from-[#8fa58a] via-[#5f7f3a] to-[#3b4f23]"
+                      : "bg-gradient-to-r from-[#cfdac8] via-[#8fa58a] to-[#5f7f3a]"
                   }`}
                 />
               </div>
 
               <p className="text-sm text-slate-500 font-medium mt-3">
-                You’ve reached{" "}
+                You have reached{" "}
                 <span
                   className={`font-bold ${
-                    isGoalReached ? "text-emerald-700" : "text-sky-700"
+                    isGoalReached ? "text-[#5f7f3a]" : "text-[#71806b]"
                   }`}
                 >
                   {progress}%
                 </span>{" "}
-                of today’s hydration goal.
+                of today&apos;s hydration goal.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(2rem,1fr))] sm:flex sm:flex-wrap gap-2.5">
               {[...Array(goalGlasses)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-8 h-12 rounded-xl border-2 overflow-hidden flex items-end transition ${
+                  className={`w-8 h-12 rounded-xl border-2 overflow-hidden flex items-end shadow-sm transition hover:-translate-y-0.5 ${
                     i < glasses
                       ? isGoalReached
-                        ? "border-emerald-400 bg-emerald-50"
-                        : "border-sky-400 bg-sky-50"
-                      : "border-slate-200 bg-slate-50"
+                        ? "border-[#5f7f3a] bg-[#dff5df]"
+                        : "border-[#8fa58a] bg-[#e5ecdf]"
+                      : "border-slate-200 bg-white/70"
                   }`}
                 >
                   <motion.div
@@ -256,8 +256,8 @@ export default function WaterTracker() {
                     animate={{ height: i < glasses ? "100%" : "0%" }}
                     className={`w-full ${
                       isGoalReached
-                        ? "bg-gradient-to-t from-emerald-600 to-emerald-400"
-                        : "bg-gradient-to-t from-sky-600 to-sky-400"
+                        ? "bg-gradient-to-t from-[#5f7f3a] to-[#8fa58a]"
+                        : "bg-gradient-to-t from-[#71806b] to-[#cfdac8]"
                     }`}
                   />
                 </div>
@@ -268,7 +268,8 @@ export default function WaterTracker() {
               <button
                 onClick={handleRemoveGlass}
                 disabled={saving || glasses === 0}
-                className="p-4 rounded-2xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
+                className="p-4 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:-translate-y-0.5 transition disabled:opacity-50 focus-ring"
+                aria-label="Remove glass"
               >
                 <Minus size={20} />
               </button>
@@ -276,11 +277,11 @@ export default function WaterTracker() {
               <button
                 onClick={handleAddGlass}
                 disabled={saving}
-                className={`flex-1 py-4 rounded-2xl text-white font-bold transition disabled:opacity-70 inline-flex items-center justify-center gap-2 ${
+                className={`flex-1 py-4 rounded-2xl text-white font-bold transition hover:-translate-y-0.5 disabled:opacity-70 inline-flex items-center justify-center gap-2 shadow-xl ${
                   isGoalReached
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-sky-600 hover:bg-sky-700"
-                }`}
+                    ? "bg-[#5f7f3a] hover:bg-[#4d6b2f] shadow-[#5f7f3a]/20"
+                    : "bg-[#8fa58a] hover:bg-[#71806b] shadow-[#8fa58a]/20"
+                } focus-ring`}
               >
                 {saving ? (
                   <>
@@ -307,24 +308,28 @@ export default function WaterTracker() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-[2rem] p-5 shadow-sm border ${
+            className={`rounded-[2rem] p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
               isGoalReached
-                ? "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100"
-                : "bg-white border-slate-200"
+                ? "bg-gradient-to-br from-[#dff5df] to-[#edf7e8] border-[#bcd3b1]"
+                : "bg-white/90 border-slate-200"
             }`}
           >
             <div
               className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border ${
                 isGoalReached
-                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                  : "bg-amber-50 text-amber-600 border-amber-100"
+                  ? "bg-[#dff5df] text-[#5f7f3a] border-[#bcd3b1]"
+                  : "bg-[#fff3e2] text-[#bd625c] border-[#f8d5c9]"
               }`}
             >
-              {isGoalReached ? <CheckCircle2 size={20} /> : <Trophy size={20} />}
+              {isGoalReached ? (
+                <CheckCircle2 size={20} />
+              ) : (
+                <Trophy size={20} />
+              )}
             </div>
 
-            <h4 className="text-lg font-black text-slate-900">
-              {isGoalReached ? "Hydration Complete" : "Today’s Status"}
+            <h4 className="text-lg font-black text-slate-950">
+              {isGoalReached ? "Hydration Complete" : "Today's Status"}
             </h4>
 
             <p className="text-sm text-slate-500 mt-2 leading-relaxed">
@@ -336,14 +341,14 @@ export default function WaterTracker() {
             <div
               className={`mt-5 rounded-2xl px-4 py-3 border ${
                 isGoalReached
-                  ? "bg-emerald-100/60 border-emerald-200"
+                  ? "bg-[#dff5df]/80 border-[#bcd3b1]"
                   : "bg-slate-50 border-slate-200"
               }`}
             >
               <p className="text-[11px] uppercase tracking-wide font-bold text-slate-400">
                 Glasses
               </p>
-              <p className="text-2xl font-black text-slate-900 mt-1">
+              <p className="text-2xl font-black text-slate-950 mt-1">
                 {glasses}
                 <span className="text-sm ml-1 text-slate-400 font-semibold">
                   / {goalGlasses}
@@ -355,23 +360,23 @@ export default function WaterTracker() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-[2rem] p-5 shadow-sm border ${
+            className={`rounded-[2rem] p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
               isGoalReached
-                ? "bg-gradient-to-br from-green-50 to-emerald-50 border-emerald-100"
-                : "bg-gradient-to-br from-lime-50 to-emerald-50 border-lime-100"
+                ? "bg-gradient-to-br from-[#edf7e8] to-[#dff5df] border-[#bcd3b1]"
+                : "bg-gradient-to-br from-[#fff8ea] to-[#dff5df] border-[#dcebd1]"
             }`}
           >
             <div
               className={`w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border ${
                 isGoalReached
-                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                  : "bg-lime-100 text-lime-700 border-lime-200"
+                  ? "bg-[#dff5df] text-[#5f7f3a] border-[#bcd3b1]"
+                  : "bg-[#e5ecdf] text-[#71806b] border-[#cfdac8]"
               }`}
             >
               <Sparkles size={20} />
             </div>
 
-            <h4 className="text-lg font-black text-slate-900">Daily Tip</h4>
+            <h4 className="text-lg font-black text-slate-950">Daily Tip</h4>
 
             <p className="text-sm text-slate-600 mt-2 leading-relaxed">
               {isGoalReached
@@ -382,17 +387,17 @@ export default function WaterTracker() {
             <div
               className={`mt-5 rounded-2xl px-4 py-3 border ${
                 isGoalReached
-                  ? "bg-white/70 border-emerald-200"
-                  : "bg-white/70 border-lime-200"
+                  ? "bg-white/70 border-[#bcd3b1]"
+                  : "bg-white/70 border-[#cfdac8]"
               }`}
             >
               <p
                 className={`text-sm font-semibold ${
-                  isGoalReached ? "text-emerald-700" : "text-lime-700"
+                  isGoalReached ? "text-[#5f7f3a]" : "text-[#71806b]"
                 }`}
               >
                 {isGoalReached
-                  ? "You completed today’s hydration goal. Keep the streak going."
+                  ? "You completed today's hydration goal. Keep the streak going."
                   : `${Math.max(targetMl - totalMl, 0)} ml left to reach your target.`}
               </p>
             </div>

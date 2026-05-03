@@ -1,77 +1,134 @@
 "use client";
+
 import { Profile } from "@/types/profile";
-import { Activity, Info, Target, TrendingUp } from "lucide-react";
+import { Activity, Info, Ruler, Scale } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function HealthInsights({ profile }: { profile: Profile }) {
   const heightInMeters = (profile.height || 0) / 100;
   const weight = profile.weight || 0;
-  const bmi = heightInMeters > 0 ? (weight / (heightInMeters * heightInMeters)).toFixed(1) : "0";
+  const bmi =
+    heightInMeters > 0
+      ? (weight / (heightInMeters * heightInMeters)).toFixed(1)
+      : "0";
   const bmiNum = Number(bmi);
 
   const getBMICategory = (val: number) => {
-    if (val < 18.5) return { label: "Underweight", color: "text-blue-500", bg: "bg-blue-500", border: "border-blue-100", tip: "Focus on nutrient-dense meals." };
-    if (val < 25) return { label: "Healthy", color: "text-emerald-500", bg: "bg-emerald-500", border: "border-emerald-100", tip: "Great job! Keep maintaining your balance." };
-    if (val < 30) return { label: "Overweight", color: "text-orange-500", bg: "bg-orange-500", border: "border-orange-100", tip: "Increase daily activity & watch macros." };
-    return { label: "Obese", color: "text-red-500", bg: "bg-red-500", border: "border-red-100", tip: "Consult with a specialist for a plan." };
+    if (val < 18.5) {
+      return {
+        label: "Underweight",
+        color: "text-[#6f8fa0]",
+        bg: "bg-[#6f8fa0]",
+        border: "border-[#d9e5e1]",
+        tip: "Focus on nutrient-dense meals.",
+      };
+    }
+
+    if (val < 25) {
+      return {
+        label: "Healthy",
+        color: "text-[#5f7f3a]",
+        bg: "bg-[#5f7f3a]",
+        border: "border-[#dcebd1]",
+        tip: "Great job. Keep maintaining your balance.",
+      };
+    }
+
+    if (val < 30) {
+      return {
+        label: "Overweight",
+        color: "text-[#c06f45]",
+        bg: "bg-[#f28f7c]",
+        border: "border-[#f8d5c9]",
+        tip: "Increase daily activity and watch macros.",
+      };
+    }
+
+    return {
+      label: "Obese",
+      color: "text-[#bd625c]",
+      bg: "bg-[#e9776f]",
+      border: "border-[#f4cbc4]",
+      tip: "Consult with a specialist for a plan.",
+    };
   };
 
   const category = getBMICategory(bmiNum);
-  
-  // Kalkulojmë pozicionin në shirit (nga 15 deri në 35 BMI)
-  const percentage = Math.min(Math.max(((bmiNum - 15) / (35 - 15)) * 100, 0), 100);
+  const percentage = Math.min(
+    Math.max(((bmiNum - 15) / (35 - 15)) * 100, 0),
+    100
+  );
 
   return (
-    <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm space-y-6 relative overflow-hidden group">
-      {/* Decorative background element */}
-      <div className={`absolute top-0 right-0 w-32 h-32 ${category.bg} opacity-[0.03] rounded-full -mr-16 -mt-16 transition-all group-hover:scale-110`} />
+    <div className="wellness-surface premium-hover p-5 sm:p-7 rounded-[2rem] space-y-6 relative overflow-hidden group">
+      <div
+        className={`absolute top-0 right-0 w-48 h-48 ${category.bg} opacity-[0.07] rounded-full -mr-20 -mt-20 blur-2xl transition-all group-hover:scale-110`}
+      />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`p-2 rounded-lg ${category.color} bg-opacity-10`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={`p-3 rounded-2xl ${category.color} bg-white border ${category.border} shadow-lg shadow-slate-900/5`}
+          >
             <Activity size={18} />
           </div>
-          <h3 className="font-black text-gray-900 text-sm uppercase tracking-widest">Body Analysis</h3>
+
+          <div>
+            <h3 className="font-black text-slate-950 text-xl tracking-tight">
+              Body Analysis
+            </h3>
+            <p className="text-xs font-semibold text-slate-500">
+              BMI and baseline metrics
+            </p>
+          </div>
         </div>
-        <Info size={16} className="text-gray-300 hover:text-emerald-500 cursor-help transition-colors" />
+
+        <Info
+          size={16}
+          className="text-slate-300 hover:text-[#5f7f3a] cursor-help transition-colors"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-        {/* BMI Score Display */}
         <div className="space-y-2">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Your Current BMI</p>
-          <div className="flex items-baseline gap-3">
-            <span className="text-5xl font-black text-slate-900 tracking-tighter">{bmi}</span>
-            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${category.border} ${category.color}`}>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em]">
+            Current BMI
+          </p>
+
+          <div className="flex flex-wrap items-baseline gap-3">
+            <span className="text-5xl sm:text-6xl font-black text-slate-950 tracking-tighter">
+              {bmi}
+            </span>
+            <div
+              className={`px-3 py-1 rounded-full bg-white text-[10px] font-black uppercase tracking-widest border ${category.border} ${category.color}`}
+            >
               {category.label}
             </div>
           </div>
-          <p className="text-xs text-gray-400 font-medium leading-relaxed max-w-[200px]">
-             {category.tip}
+
+          <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-[240px]">
+            {category.tip}
           </p>
         </div>
 
-        {/* BMI Visual Scale */}
         <div className="space-y-4">
-          <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-            {/* Shkalla e ngjyrave në sfond */}
+          <div className="relative w-full h-4 bg-white/80 rounded-full overflow-hidden shadow-inner border border-[#edf1e8]">
             <div className="absolute inset-0 flex">
-              <div className="h-full w-[18%] bg-blue-200" />
-              <div className="h-full w-[32%] bg-emerald-200" />
-              <div className="h-full w-[25%] bg-orange-200" />
-              <div className="h-full w-[25%] bg-red-200" />
+              <div className="h-full w-[18%] bg-[#d9e5e1]" />
+              <div className="h-full w-[32%] bg-[#dff5df]" />
+              <div className="h-full w-[25%] bg-[#f8d5c9]" />
+              <div className="h-full w-[25%] bg-[#efaaa0]" />
             </div>
-            
-            {/* Treguesi (Indicator) */}
-            <motion.div 
+
+            <motion.div
               initial={{ left: 0 }}
               animate={{ left: `${percentage}%` }}
               transition={{ type: "spring", stiffness: 50 }}
-              className="absolute top-0 w-3 h-full bg-slate-900 border-2 border-white rounded-full shadow-lg z-10"
+              className="absolute top-0 z-10 h-full w-4 rounded-full border-2 border-white bg-slate-950 shadow-lg"
             />
           </div>
-          
-          <div className="flex justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest">
+
+          <div className="flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest">
             <span>15</span>
             <span>20</span>
             <span>25</span>
@@ -81,29 +138,35 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
         </div>
       </div>
 
-      {/* Mini Stats Footer */}
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
-            <TrendingUp size={14} />
+      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#dcebd1]">
+        <div className="flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
+          <div className="w-9 h-9 bg-[#dff5df] rounded-xl flex items-center justify-center text-[#5f7f3a]">
+            <Scale size={15} />
           </div>
           <div>
-            <p className="text-[9px] font-black text-gray-400 uppercase">Weight</p>
-            <p className="text-sm font-bold text-gray-900">{profile.weight} kg</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Weight
+            </p>
+            <p className="text-sm font-bold text-slate-900">
+              {profile.weight} kg
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
-            <Target size={14} />
+
+        <div className="flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
+          <div className="w-9 h-9 bg-[#e5ecdf] rounded-xl flex items-center justify-center text-[#71806b]">
+            <Ruler size={15} />
           </div>
           <div>
-            <p className="text-[9px] font-black text-gray-400 uppercase">Height</p>
-            <p className="text-sm font-bold text-gray-900">{profile.height} cm</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Height
+            </p>
+            <p className="text-sm font-bold text-slate-900">
+              {profile.height} cm
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-

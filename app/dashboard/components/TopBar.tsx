@@ -2,14 +2,15 @@
 
 import React, { useState } from "react";
 import type { Profile } from "@/types/profile";
-import { Settings, X, Bell } from "lucide-react";
+import { Settings, X, Bell, CalendarDays } from "lucide-react";
 import ProfilesCRUD from "./ProfilesCRUD";
 
 interface TopBarProps {
   profile: Profile | null;
+  onProfileUpdated?: (profile: Profile) => void;
 }
 
-export default function TopBar({ profile }: TopBarProps) {
+export default function TopBar({ profile, onProfileUpdated }: TopBarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getInitials = () => {
@@ -27,35 +28,33 @@ export default function TopBar({ profile }: TopBarProps) {
 
   return (
     <>
-      {/* TOPBAR */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 h-20 flex items-center justify-between">
-
-          {/* LEFT */}
+      <nav className="sticky top-16 lg:top-0 z-40 bg-[#fffaf0]/82 backdrop-blur-2xl border-b border-[#dcebd1] shadow-[0_14px_36px_rgba(37,51,34,0.06)]">
+        <div className="max-w-[1480px] mx-auto px-3 sm:px-6 md:px-8 h-16 sm:h-20 flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg sm:text-1xl font-black tracking-tight text-slate-800">
-              Welcome back,
+            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#71806b]">
+              <CalendarDays size={13} />
+              Today
+            </div>
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight text-slate-950">
+              Welcome back, {displayName.split(" ")[0]}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              {displayName}
-            </p>
           </div>
 
-          {/* RIGHT */}
           <div className="flex items-center gap-2 sm:gap-3">
-
-            {/* Notifications */}
-            <button className="relative p-3 rounded-2xl border border-slate-200 bg-white text-slate-500 hover:bg-sky-50 hover:text-sky-600 transition">
+            <button
+              className="relative p-3 rounded-2xl border border-[#dcebd1] bg-white/90 text-[#71806b] shadow-md shadow-[#5f7f3a]/10 hover:bg-[#fff3e2] hover:text-[#bd625c] hover:border-[#f8d5c9] hover:-translate-y-0.5 transition focus-ring"
+              aria-label="Notifications coming soon"
+              title="Notifications coming soon"
+              type="button"
+            >
               <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border-2 border-white" />
             </button>
 
-            {/* Profile */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 sm:gap-3 rounded-2xl border border-slate-200 bg-white px-2 py-2 sm:px-3 hover:shadow-sm hover:border-slate-300 transition"
+              className="flex items-center gap-2 sm:gap-3 rounded-[1.35rem] border border-[#dcebd1] bg-white/90 px-2 py-2 sm:px-3 shadow-md shadow-[#5f7f3a]/10 hover:shadow-xl hover:shadow-[#5f7f3a]/15 hover:border-[#bcd3b1] hover:-translate-y-0.5 transition focus-ring"
             >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#3b4f23] via-[#5f7f3a] to-[#f28f7c] flex items-center justify-center text-white font-black shadow-md shadow-[#5f7f3a]/20 ring-1 ring-white/80">
                 {getInitials()}
               </div>
 
@@ -63,7 +62,7 @@ export default function TopBar({ profile }: TopBarProps) {
                 <p className="text-sm font-bold text-slate-900 truncate max-w-[120px]">
                   {displayName}
                 </p>
-                <p className="text-[11px] text-slate-500 uppercase">
+                <p className="text-[11px] font-bold text-[#5f7f3a] uppercase tracking-wide">
                   Profile
                 </p>
               </div>
@@ -74,33 +73,30 @@ export default function TopBar({ profile }: TopBarProps) {
         </div>
       </nav>
 
-      {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4">
           <div
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             onClick={() => setIsModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
-
-            {/* Header */}
-            <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">
+          <div className="relative w-full max-w-2xl bg-white rounded-t-[2rem] sm:rounded-[2rem] border border-[#dcebd1] shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center px-4 sm:px-6 py-4 sm:py-5 border-b border-[#dcebd1] bg-gradient-to-r from-[#dff5df] to-white">
+              <h2 className="text-lg font-black text-slate-900">
                 Account Settings
               </h2>
 
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50"
+                className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 focus-ring"
+                aria-label="Close account settings"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6 max-h-[75vh] overflow-y-auto">
-              <ProfilesCRUD />
+            <div className="p-4 sm:p-6 max-h-[78vh] overflow-y-auto">
+              <ProfilesCRUD onProfileUpdated={onProfileUpdated} />
             </div>
           </div>
         </div>
