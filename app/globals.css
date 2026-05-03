@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fff8ea;
+  --foreground: #253322;
 }
 
 @theme inline {
@@ -12,15 +12,94 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(95, 127, 58, 0.16), transparent 28rem),
+    radial-gradient(circle at 88% 0%, rgba(242, 143, 124, 0.14), transparent 28rem),
+    linear-gradient(180deg, #fffaf0 0%, #edf7e8 52%, #f8f1df 100%);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  color-scheme: light;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: rgba(242, 143, 124, 0.28);
+  color: #3b4f23;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.wellness-surface {
+  background:
+    linear-gradient(135deg, rgba(255, 253, 247, 0.97), rgba(239, 248, 232, 0.9));
+  border: 1px solid rgba(188, 211, 177, 0.72);
+  box-shadow:
+    0 30px 90px rgba(95, 127, 58, 0.13),
+    0 12px 32px rgba(37, 51, 34, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+.premium-card {
+  box-shadow:
+    0 28px 80px rgba(95, 127, 58, 0.16),
+    0 12px 30px rgba(37, 51, 34, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
+.premium-hover {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    color 220ms ease;
+}
+
+.premium-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 34px 90px rgba(95, 127, 58, 0.18),
+    0 16px 36px rgba(37, 51, 34, 0.10);
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 4px rgba(242, 143, 124, 0.24);
 }

@@ -49,7 +49,7 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? "Duke u ngarkuar..." : children}
+      {loading ? "Loading..." : children}
     </button>
   );
 }

@@ -1,14 +1,15 @@
 "use client";
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
+import { Leaf } from "lucide-react";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Presim derisa AuthContext të vërtetojë nëse përdoruesi është i loguar
     if (!loading) {
       if (!user) {
         router.push("/login");
@@ -18,36 +19,16 @@ export default function HomePage() {
     }
   }, [user, loading, router]);
 
-  // Shfaqim një mesazh të thjeshtë ose loader derisa të ndodhë redirect
   return (
-    <div style={styles.loaderContainer}>
-      <div style={styles.spinner}></div>
-      <p style={styles.text}>Duke u drejtuar...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[radial-gradient(circle_at_12%_8%,rgba(95,127,58,0.18),transparent_28rem),linear-gradient(180deg,#fffaf0,#edf7e8)] px-6">
+      <div className="wellness-surface rounded-[2rem] px-6 py-5 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-2xl bg-[#dff5df] text-[#5f7f3a] flex items-center justify-center">
+          <Leaf size={18} className="animate-pulse" />
+        </div>
+        <p className="text-sm font-bold text-slate-600">
+          Redirecting to NutriScan AI...
+        </p>
+      </div>
     </div>
   );
 }
-
-const styles: { [key: string]: React.CSSProperties } = {
-  loaderContainer: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    fontFamily: "sans-serif"
-  },
-  spinner: {
-    width: "30px",
-    height: "30px",
-    border: "3px solid #E2E8F0",
-    borderTop: "3px solid #101828",
-    borderRadius: "50%",
-    marginBottom: "10px",
-    animation: "spin 1s linear infinite"
-  },
-  text: {
-    color: "#64748B",
-    fontSize: "0.9rem"
-  }
-};
