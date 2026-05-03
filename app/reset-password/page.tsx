@@ -1,85 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Leaf, Mail, Sparkles, UserPlus } from "lucide-react";
+import { KeyRound, Leaf, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function SignUpPage() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [name, setName] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+export default function ResetPasswordPage() {
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: string }>({
     text: "",
     type: "",
   });
 
-  const router = useRouter();
-
-  const getProfileRoute = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle();
-
-    return data ? "/dashboard" : "/setup";
-  };
-
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ text: "", type: "" });
 
-    const trimmedName = name.trim();
-
-    if (!trimmedName) {
-      setLoading(false);
-      return setMessage({
-        text: "Full name is required.",
-        type: "error",
-      });
-    }
-
     if (password.length < 6) {
-      setLoading(false);
-      return setMessage({
+      setMessage({
         text: "Password must be at least 6 characters.",
         type: "error",
       });
+      setLoading(false);
+      return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: trimmedName },
-        emailRedirectTo: `${window.location.origin}/setup`,
-      },
-    });
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       setMessage({ text: error.message, type: "error" });
       setLoading(false);
-    } else {
-      if (data.session?.user) {
-        setMessage({
-          text: "Account created. Continue setup.",
-          type: "success",
-        });
-        const route = await getProfileRoute(data.session.user.id);
-        router.replace(route);
-      } else {
-        setMessage({
-          text: "Account created. Check your email to confirm your account.",
-          type: "success",
-        });
-        setLoading(false);
-      }
+      return;
     }
+
+    setMessage({
+      text: "Password updated. You can now sign in.",
+      type: "success",
+    });
+
+    await supabase.auth.signOut();
+    router.replace("/login");
   };
 
   return (
@@ -100,50 +65,24 @@ export default function SignUpPage() {
               NutriScan <span className="text-[#5f7f3a]">AI</span>
             </p>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.18em]">
-              Smart nutrition
+              New password
             </p>
           </div>
         </div>
 
         <div className="mt-8">
           <h1 className="text-3xl font-black tracking-tight text-slate-950">
-            Create Account
+            Set New Password
           </h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Start your journey to smarter nutrition.
+            Enter a new password for your account.
           </p>
         </div>
 
-        <form onSubmit={handleSignUp} className="mt-8 space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Full Name
-            </span>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
-            />
-          </label>
-
+        <form onSubmit={handleUpdatePassword} className="mt-8 space-y-4">
           <label className="block">
             <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              <Mail size={14} /> Email Address
-            </span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Password
+              <KeyRound size={14} /> New Password
             </span>
             <input
               type="password"
@@ -166,22 +105,19 @@ export default function SignUpPage() {
             </div>
           )}
 
-          <motion.button
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             type="submit"
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#5f7f3a] px-5 py-3.5 font-black text-white shadow-lg shadow-[#5f7f3a]/20 transition hover:bg-[#4d6b2f] disabled:opacity-70 focus-ring"
           >
-            <UserPlus size={18} />
-            {loading ? "Creating..." : "Create Account"}
-          </motion.button>
+            {loading ? "Updating..." : "Update Password"}
+          </button>
         </form>
 
         <p className="mt-6 text-center text-sm font-medium text-slate-500">
-          Already have an account?{" "}
+          Back to{" "}
           <Link href="/login" className="font-black text-[#5f7f3a]">
-            Sign in
+            sign in
           </Link>
         </p>
       </motion.section>

@@ -17,20 +17,20 @@ interface StepProps {
 }
 
 const cardStyles = {
-  base: "relative p-5 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden",
-  inactive: "border-white/10 bg-white/5 backdrop-blur-xl text-slate-300 hover:bg-white/10 hover:scale-[1.02]",
-  active: "border-emerald-500 bg-emerald-500/20 text-white shadow-[0_0_20px_rgba(16,185,129,0.2)]",
+  base: "relative p-4 sm:p-5 rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden",
+  inactive: "border-slate-200 bg-white/70 text-slate-600 hover:bg-white hover:border-[#bcd3b1] hover:scale-[1.01]",
+  active: "border-[#8fa58a] bg-[#dff5df] text-[#3b4f23] shadow-lg shadow-[#5f7f3a]/10",
 };
 
 /* -------- HEADER COMPONENT -------- */
 // Zëvendësuar 'any' me 'LucideIcon' për të shmangur gabimin Unexpected any
 function StepTitle({ icon: Icon, title }: { icon: LucideIcon; title: string }) {
   return (
-    <div className="flex items-center gap-4 mb-8">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+    <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5f7f3a] to-[#f28f7c] flex items-center justify-center shadow-lg shadow-[#5f7f3a]/20">
         <Icon className="w-6 h-6 text-white" />
       </div>
-      <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
+      <h2 className="text-lg sm:text-xl font-black text-slate-950 tracking-tight">{title}</h2>
     </div>
   );
 }
@@ -45,7 +45,7 @@ export function GenderStep({ formData, update }: StepProps) {
   return (
     <div>
       <StepTitle icon={User} title="Select Gender" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {options.map((g) => (
           <motion.div
             key={g.label}
@@ -58,7 +58,7 @@ export function GenderStep({ formData, update }: StepProps) {
             <div className="text-4xl mb-2">{g.emoji}</div>
             <p className="font-bold text-lg">{g.label}</p>
             {formData.gender === g.label && (
-              <Check className="absolute top-3 right-3 w-5 h-5 text-emerald-400" />
+              <Check className="absolute top-3 right-3 w-5 h-5 text-[#5f7f3a]" />
             )}
           </motion.div>
         ))}
@@ -81,7 +81,7 @@ export function DietStep({ formData, update }: StepProps) {
   return (
     <div>
       <StepTitle icon={UtensilsCrossed} title="Dietary Preference" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {DIET_TYPES.map((d) => (
           <motion.div
             key={d}
@@ -126,14 +126,14 @@ export function ActivityStep({ formData, update }: StepProps) {
               formData.activity_level === a ? cardStyles.active : cardStyles.inactive
             }`}
           >
-            <div className="text-2xl w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl">
+            <div className="text-2xl w-10 h-10 flex items-center justify-center bg-white rounded-xl border border-slate-100">
               {activityDetails[a].icon}
             </div>
             <div className="flex-1">
               <p className="font-bold capitalize text-sm">{a.replace("_", " ")}</p>
               <p className="text-[11px] opacity-60">{activityDetails[a].desc}</p>
             </div>
-            {formData.activity_level === a && <Check className="w-5 h-5 text-emerald-400" />}
+            {formData.activity_level === a && <Check className="w-5 h-5 text-[#5f7f3a]" />}
           </motion.div>
         ))}
       </div>
@@ -167,8 +167,8 @@ export function AllergiesStep({ formData, update }: StepProps) {
             onClick={() => toggleAllergy(a)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1 ${
               formData.allergies?.split(", ").includes(a)
-                ? "bg-emerald-500 border-emerald-500 text-white"
-                : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+                ? "bg-[#5f7f3a] border-[#5f7f3a] text-white"
+                : "bg-white border-slate-200 text-slate-500 hover:bg-[#dff5df] hover:border-[#bcd3b1]"
             }`}
           >
             {a} {formData.allergies?.split(", ").includes(a) ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
@@ -181,7 +181,7 @@ export function AllergiesStep({ formData, update }: StepProps) {
         placeholder="Type any other specific allergies..."
         value={formData.allergies ?? ""}
         onChange={(e) => update("allergies", e.target.value)}
-        className="w-full p-5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-slate-600 min-h-[120px] focus:border-emerald-500/50 outline-none resize-none"
+        className="w-full p-5 rounded-2xl bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 min-h-[120px] focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10 outline-none resize-none"
       />
     </div>
   );
@@ -199,13 +199,13 @@ export function GoalsStep({ formData, update }: StepProps) {
   return (
     <div>
       <StepTitle icon={Target} title="Fitness Goal" />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {GOALS.map((g) => (
           <motion.div
             key={g}
             whileTap={{ scale: 0.95 }}
             onClick={() => update("goal", g)}
-            className={`${cardStyles.base} flex flex-col items-center justify-center p-6 text-center ${
+            className={`${cardStyles.base} flex flex-col items-center justify-center p-5 sm:p-6 text-center ${
               formData.goal === g ? cardStyles.active : cardStyles.inactive
             }`}
           >
@@ -238,7 +238,7 @@ export function BodyStep({ formData, update }: StepProps) {
               placeholder={field.label}
               value={(formData[field.key] as string | number) ?? ""}
               onChange={(e) => update(field.key, Number(e.target.value))}
-              className="w-full p-5 pl-14 rounded-2xl bg-white/5 border border-white/10 text-white text-lg focus:border-emerald-500/50 transition-all outline-none"
+              className="w-full p-5 pl-14 rounded-2xl bg-white border border-slate-200 text-slate-900 text-lg focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10 transition-all outline-none"
             />
           </div>
         ))}
@@ -256,7 +256,7 @@ export function NotesStep({ formData, update }: StepProps) {
         placeholder="List any chronic conditions or health notes..."
         value={formData.chronic_conditions ?? ""}
         onChange={(e) => update("chronic_conditions", e.target.value)}
-        className="w-full p-5 rounded-2xl bg-white/5 border border-white/10 text-white min-h-[150px] focus:border-emerald-500/50 outline-none resize-none"
+        className="w-full p-5 rounded-2xl bg-white border border-slate-200 text-slate-900 min-h-[150px] focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10 outline-none resize-none"
       />
     </div>
   );
@@ -274,7 +274,7 @@ export function MealFrequencyStep({ formData, update }: StepProps) {
           placeholder="Number of meals per day"
           value={formData.meal_frequency ?? ""}
           onChange={(e) => update("meal_frequency", Number(e.target.value))}
-          className="w-full p-5 pl-14 rounded-2xl bg-white/5 border border-white/10 text-white focus:border-emerald-500/50 outline-none"
+          className="w-full p-5 pl-14 rounded-2xl bg-white border border-slate-200 text-slate-900 focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10 outline-none"
         />
       </div>
     </div>

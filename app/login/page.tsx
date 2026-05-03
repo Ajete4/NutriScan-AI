@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Leaf, LogIn, Mail, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>("");
@@ -18,20 +19,35 @@ export default function LoginPage() {
 
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [checkingProfile, setCheckingProfile] = useState(false);
+
+  const getProfileRoute = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ? "/dashboard" : "/setup";
+  };
 
   useEffect(() => {
     const checkProfile = async () => {
       if (!authLoading && user) {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (!data) {
-          router.push("/setup");
-        } else {
-          router.push("/dashboard");
+        try {
+          setCheckingProfile(true);
+          const route = await getProfileRoute(user.id);
+          router.replace(route);
+        } catch {
+          setMessage({
+            text: "Unable to load your profile. Please try again.",
+            type: "error",
+          });
+          setCheckingProfile(false);
         }
       }
     };
@@ -45,7 +61,7 @@ export default function LoginPage() {
     setMessage({ text: "", type: "" });
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
@@ -58,7 +74,6 @@ export default function LoginPage() {
       return;
     }
 
-    // ✅ sigurohu që user ekziston
     if (!data.session) {
       setMessage({
         text: "Login failed. No session created.",
@@ -68,284 +83,139 @@ export default function LoginPage() {
       return;
     }
 
-    // ✅ login sukses
-    router.push("/setup");
+    try {
+      const route = await getProfileRoute(data.session.user.id);
+      router.replace(route);
+    } catch {
+      setMessage({
+        text: "Login succeeded, but we could not load your profile.",
+        type: "error",
+      });
+      setLoading(false);
+    }
   };
 
-  if (authLoading) return null;
+  if (authLoading || checkingProfile) return null;
 
   return (
-    <main style={styles.main}>
+    <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(95,127,58,0.22),transparent_28rem),radial-gradient(circle_at_88%_12%,rgba(242,143,124,0.18),transparent_26rem),linear-gradient(135deg,#fffaf0,#edf7e8_45%,#fff8ea)] px-4 py-8 flex items-center justify-center">
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        style={styles.card}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-5xl grid lg:grid-cols-[1fr_0.9fr] gap-6 items-stretch"
       >
-        {/* Logo */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 120 }}
-          style={styles.logo}
-        >
-          🌿 NutriScan <span style={styles.aiTag}>AI</span>
-        </motion.div>
-
-        <h1 style={styles.title}>Welcome Back</h1>
-        <p style={styles.subtitle}>
-          Connect to your virtual nutritionist
-        </p>
-
-        <form onSubmit={handleLogin} style={styles.form}>
-          {/* EMAIL */}
-          <div style={styles.inputWrapper}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <label
-              style={{
-                ...styles.label,
-                top: email ? "-8px" : "50%",
-                fontSize: email ? "0.7rem" : "0.9rem",
-                color: email ? "#2D6A4F" : "#94A3B8",
-              }}
-            >
-              Email Address
-            </label>
-          </div>
-
-          {/* PASSWORD */}
-          <div style={styles.inputWrapper}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={styles.input}
-            />
-            <label
-              style={{
-                ...styles.label,
-                top: password ? "-8px" : "50%",
-                fontSize: password ? "0.7rem" : "0.9rem",
-                color: password ? "#2D6A4F" : "#94A3B8",
-              }}
-            >
-              Password
-            </label>
-          </div>
-
-          <div style={{ textAlign: "right" }}>
-            <Link href="/forgot" style={styles.forgot}>
-              Forgot password?
-            </Link>
-          </div>
-
-          {/* MESSAGE */}
-          {message.text && (
-            <div
-              style={{
-                ...styles.message,
-                backgroundColor:
-                  message.type === "error" ? "#FFF1F2" : "#ECFDF5",
-                color:
-                  message.type === "error" ? "#BE123C" : "#065F46",
-              }}
-            >
-              {message.text}
+        <section className="hidden lg:flex rounded-[2rem] bg-gradient-to-br from-[#5f7f3a] via-[#8fa58a] to-[#3b4f23] p-8 text-white shadow-2xl shadow-[#5f7f3a]/20 relative overflow-hidden">
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+          <div className="relative mt-auto">
+            <div className="h-14 w-14 rounded-3xl bg-white/15 border border-white/20 flex items-center justify-center mb-6">
+              <Leaf size={28} />
             </div>
-          )}
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#dff5df]">
+              NutriScan AI
+            </p>
+            <h1 className="mt-3 text-4xl font-black tracking-tight">
+              Your nutrition dashboard, coached by AI.
+            </h1>
+            <p className="mt-4 max-w-md text-[#fff8ea]/85 font-medium leading-relaxed">
+              Track meals, macros, hydration, and personalized plans in one calm wellness workspace.
+            </p>
+          </div>
+        </section>
 
-          {/* BUTTON */}
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            type="submit"
-            disabled={loading}
-            style={styles.button}
-          >
-            {loading ? "Authenticating..." : "Sign In"}
-          </motion.button>
-        </form>
+        <section className="wellness-surface rounded-[2rem] p-6 sm:p-8">
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 rounded-3xl bg-gradient-to-br from-[#5f7f3a] via-[#8fa58a] to-[#f28f7c] text-white flex items-center justify-center shadow-lg shadow-[#5f7f3a]/20">
+              <Leaf size={23} />
+              <Sparkles size={11} className="absolute right-2.5 top-2.5" />
+            </div>
+            <div>
+              <p className="text-xl font-black tracking-tight text-slate-950">
+                NutriScan <span className="text-[#5f7f3a]">AI</span>
+              </p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.18em]">
+                Smart nutrition
+              </p>
+            </div>
+          </div>
 
-        <p style={styles.footer}>
-          Don’t have an account?
-          <Link href="/signup" style={styles.signup}>
-            {" "}Create one
-          </Link>
-        </p>
+          <div className="mt-8">
+            <h1 className="text-3xl font-black tracking-tight text-slate-950">
+              Welcome back
+            </h1>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Sign in to continue your wellness routine.
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="mt-8 space-y-4">
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                <Mail size={14} /> Email Address
+              </span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                Password
+              </span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
+              />
+            </label>
+
+            <div className="text-right">
+              <Link
+                href="/forgot"
+                className="text-xs font-bold text-[#5f7f3a] hover:text-[#4d6b2f]"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {message.text && (
+              <div
+                className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                  message.type === "error"
+                    ? "bg-red-50 text-red-600 border border-red-100"
+                    : "bg-[#dff5df] text-[#5f7f3a] border border-[#bcd3b1]"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            <motion.button
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#5f7f3a] px-5 py-3.5 font-black text-white shadow-lg shadow-[#5f7f3a]/20 transition hover:bg-[#4d6b2f] disabled:opacity-70 focus-ring"
+            >
+              <LogIn size={18} />
+              {loading ? "Authenticating..." : "Sign In"}
+            </motion.button>
+          </form>
+
+          <p className="mt-6 text-center text-sm font-medium text-slate-500">
+            Do not have an account?{" "}
+            <Link href="/signup" className="font-black text-[#5f7f3a]">
+              Create one
+            </Link>
+          </p>
+        </section>
       </motion.div>
     </main>
   );
 }
-const styles: { [key: string]: React.CSSProperties } = {
-  main: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: "Inter, sans-serif",
-    background: "linear-gradient(135deg, #0F172A, #1E293B, #064E3B)",
-    position: "relative",
-    overflow: "hidden",
-    padding: "clamp(12px, 4vw, 24px)", // ✅ responsive spacing
-  },
-
-  /* 🌟 Glow Effects */
-  glow1: {
-    position: "absolute",
-    width: "clamp(200px, 40vw, 320px)",
-    height: "clamp(200px, 40vw, 320px)",
-    background: "#10B981",
-    filter: "blur(140px)",
-    top: "-80px",
-    left: "-80px",
-    opacity: 0.35,
-    zIndex: 0,
-  },
-
-  glow2: {
-    position: "absolute",
-    width: "clamp(180px, 35vw, 260px)",
-    height: "clamp(180px, 35vw, 260px)",
-    background: "#22D3EE",
-    filter: "blur(120px)",
-    bottom: "-60px",
-    right: "-60px",
-    opacity: 0.3,
-    zIndex: 0,
-  },
-
-  /* 💎 Card */
-  card: {
-    width: "100%",
-    maxWidth: "420px",
-    padding: "clamp(24px, 5vw, 42px)",
-    borderRadius: "clamp(18px, 4vw, 26px)",
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(22px)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
-    zIndex: 10,
-  },
-
-  /* 🌿 Logo */
-  logo: {
-    textAlign: "center",
-    fontWeight: "800",
-    fontSize: "clamp(1.2rem, 4vw, 1.6rem)",
-    marginBottom: "18px",
-    color: "#D1FAE5",
-  },
-
-  aiTag: {
-    background: "linear-gradient(135deg, #10B981, #059669)",
-    color: "#fff",
-    padding: "3px 9px",
-    borderRadius: "12px",
-    fontSize: "0.65rem",
-    marginLeft: "6px",
-    fontWeight: "700",
-  },
-
-  /* 🧠 Text */
-  title: {
-    textAlign: "center",
-    fontSize: "clamp(1.4rem, 4vw, 1.9rem)",
-    fontWeight: "800",
-    color: "#F1F5F9",
-    marginBottom: "6px",
-  },
-
-  subtitle: {
-    textAlign: "center",
-    fontSize: "clamp(0.8rem, 2.5vw, 0.95rem)",
-    color: "#94A3B8",
-    marginBottom: "clamp(18px, 4vw, 30px)",
-  },
-
-  /* 📦 Form */
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "clamp(14px, 3vw, 20px)",
-  },
-
-  inputWrapper: {
-    position: "relative",
-  },
-
-  /* 💎 Inputs */
-  input: {
-    width: "100%",
-    padding: "clamp(12px, 3vw, 15px)",
-    borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,0.12)",
-    outline: "none",
-    fontSize: "16px", // ✅ FIX mobile zoom
-    color: "#F8FAFC",
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(8px)",
-    transition: "all 0.25s ease",
-  },
-
-  label: {
-    position: "absolute",
-    left: "14px",
-    transform: "translateY(-50%)",
-    background: "transparent",
-    padding: "0 6px",
-    transition: "0.2s ease",
-    pointerEvents: "none",
-  },
-
-  /* 🔗 Links */
-  forgot: {
-    fontSize: "clamp(0.7rem, 2vw, 0.8rem)",
-    color: "#34D399",
-    textDecoration: "none",
-    fontWeight: "500",
-  },
-
-  signup: {
-    color: "#34D399",
-    fontWeight: "700",
-    textDecoration: "none",
-  },
-
-  /* 🚀 Button */
-  button: {
-    padding: "clamp(12px, 3vw, 15px)",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #10B981, #059669)",
-    color: "#fff",
-    fontWeight: "700",
-    cursor: "pointer",
-    fontSize: "clamp(0.9rem, 2.5vw, 1rem)",
-    boxShadow: "0 12px 30px rgba(16,185,129,0.35)",
-    transition: "all 0.3s ease",
-  },
-
-  /* 💬 Message */
-  message: {
-    padding: "12px",
-    borderRadius: "12px",
-    textAlign: "center",
-    fontSize: "0.85rem",
-    backdropFilter: "blur(10px)",
-  },
-
-  /* 📌 Footer */
-  footer: {
-    marginTop: "clamp(16px, 3vw, 24px)",
-    textAlign: "center",
-    fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)",
-    color: "#94A3B8",
-  },
-};
