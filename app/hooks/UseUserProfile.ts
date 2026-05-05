@@ -31,10 +31,15 @@ export function useUserProfile() {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         setError(profileError.message);
+        return null;
+      }
+
+      if (!data) {
+        setProfile(null);
         return null;
       }
 

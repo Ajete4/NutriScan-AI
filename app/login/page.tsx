@@ -95,7 +95,13 @@ export default function LoginPage() {
     }
   };
 
-  if (authLoading || checkingProfile) return null;
+  if (authLoading || checkingProfile) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#fff8ea] px-6 text-sm font-semibold text-slate-500">
+        Redirecting...
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_12%_8%,rgba(95,127,58,0.22),transparent_28rem),radial-gradient(circle_at_88%_12%,rgba(242,143,124,0.18),transparent_26rem),linear-gradient(135deg,#fffaf0,#edf7e8_45%,#fff8ea)] px-4 py-8 flex items-center justify-center">

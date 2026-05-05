@@ -31,9 +31,13 @@ type MealLog = {
 
 type RecentLogsProps = {
   refreshKey?: number;
+  onMealDeleted?: () => void;
 };
 
-export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
+export default function RecentLogs({
+  refreshKey = 0,
+  onMealDeleted,
+}: RecentLogsProps) {
   const { user } = useAuth();
 
   const [logs, setLogs] = useState<MealLog[]>([]);
@@ -162,6 +166,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
 
       setLogs((prev) => prev.filter((log) => log.id !== id));
       setHistoryLogs((prev) => prev.filter((log) => log.id !== id));
+      onMealDeleted?.();
     } catch (err) {
       console.error(err);
     } finally {
@@ -188,10 +193,10 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between gap-3 px-1 pt-2">
-        <div>
-          <h3 className="font-black text-slate-950 text-xl sm:text-2xl tracking-tight flex items-center gap-2">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-1 pt-2">
+        <div className="min-w-0">
+          <h3 className="font-black text-slate-950 text-xl sm:text-2xl tracking-tight flex flex-wrap items-center gap-2">
             Recent Scans
             <span className="bg-[#dff5df] text-[#5f7f3a] text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest">
               Live
@@ -204,7 +209,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
 
         <button
           onClick={handleOpenHistory}
-          className="text-xs font-bold text-[#5f7f3a] hover:text-[#4d6b2f] flex items-center gap-1 shrink-0 focus-ring rounded-full"
+          className="text-xs font-bold text-[#5f7f3a] hover:text-[#4d6b2f] inline-flex w-full sm:w-auto items-center justify-center gap-1 shrink-0 focus-ring rounded-full"
         >
           View History <ChevronRight size={14} />
         </button>
@@ -221,7 +226,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.06 }}
-                className="group bg-white/95 p-4 sm:p-5 rounded-[1.75rem] border border-[#e4eadc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#bcd3b1] hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-[#5f7f3a]/15 transition-all duration-300"
+                className="group min-w-0 bg-white/95 p-4 sm:p-5 rounded-[1.75rem] border border-[#e4eadc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#bcd3b1] hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-[#5f7f3a]/15 transition-all duration-300"
               >
                 <div className="flex items-center gap-3 sm:gap-5 min-w-0 w-full">
                   <div className="relative shrink-0">
@@ -248,7 +253,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
                   </div>
 
                   <div className="min-w-0">
-                    <p className="font-black text-slate-950 group-hover:text-[#5f7f3a] transition-colors truncate">
+                    <p className="font-black text-slate-950 group-hover:text-[#5f7f3a] transition-colors break-words">
                       {log.meal_name}
                     </p>
 
@@ -265,7 +270,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 shrink-0 w-full sm:w-auto pl-16 sm:pl-0">
+                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 shrink-0 w-full sm:w-auto sm:pl-0">
                   <div className="text-left sm:text-right">
                     <p className="font-black text-lg text-slate-950 group-hover:text-[#5f7f3a] transition-colors">
                       +{Math.round(Number(log.calories || 0))}{" "}
@@ -371,7 +376,7 @@ export default function RecentLogs({ refreshKey = 0 }: RecentLogsProps) {
                           </div>
 
                           <div className="min-w-0">
-                            <p className="truncate font-black text-slate-950">
+                            <p className="break-words font-black text-slate-950">
                               {log.meal_name}
                             </p>
 

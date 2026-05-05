@@ -68,7 +68,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
   return (
     <motion.div
       whileHover={{ y: -3 }}
-      className="wellness-surface premium-hover rounded-[1.75rem] p-4 sm:p-5 transition-all duration-300"
+      className="wellness-surface premium-hover min-w-0 rounded-[1.75rem] p-4 sm:p-5 transition-all duration-300"
     >
       <div className="flex items-start justify-between gap-4">
         <div
@@ -96,7 +96,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
           </span>
         </div>
 
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 mt-1 break-words">
           Goal:{" "}
           <span className={`font-bold ${styles.text}`}>
             {Math.round(target)} {unit}
@@ -213,17 +213,17 @@ export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps)
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="wellness-surface premium-card rounded-[2.25rem] p-5 sm:p-7 md:p-8 relative overflow-hidden"
+        className="wellness-surface premium-card rounded-[2rem] sm:rounded-[2.25rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden"
       >
         <div className="absolute -right-12 -top-16 h-64 w-64 rounded-full bg-[#dff5df]/80 blur-3xl" />
         <div className="absolute -bottom-20 left-12 h-56 w-56 rounded-full bg-[#fff3e2]/80 blur-3xl" />
         <div className="absolute right-6 top-6 hidden h-24 w-24 rounded-[2rem] border border-white/60 bg-white/30 rotate-12 lg:block" />
 
-        <div className="relative flex flex-col gap-7">
+        <div className="relative flex min-w-0 flex-col gap-5 sm:gap-7">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-[#fff3e2] border border-[#f8d5c9] px-3 py-1 text-xs font-black text-[#bd625c] uppercase tracking-[0.14em]">
@@ -231,24 +231,24 @@ export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps)
                 Daily Energy
               </div>
 
-              <div className="mt-5 flex flex-wrap items-end gap-3">
-                <span className="text-5xl sm:text-6xl font-black tracking-tight text-slate-950">
+              <div className="mt-5 flex flex-wrap items-end gap-2 sm:gap-3">
+                <span className="text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight text-slate-950">
                   {consumedCalories}
                 </span>
-                <span className="pb-1 text-2xl sm:text-4xl font-black tracking-tight text-slate-900">
+                <span className="pb-1 text-xl sm:text-3xl xl:text-4xl font-black tracking-tight text-slate-900">
                   / {targetCalories} kcal
                 </span>
               </div>
 
-              <p className="mt-2 text-sm md:text-base text-slate-500 font-medium">
+              <p className="mt-2 text-sm md:text-base text-slate-500 font-medium break-words">
                 You have reached{" "}
                 <span className="text-[#5f7f3a] font-bold">{progress}%</span>{" "}
                 of today&apos;s calorie target.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
-              <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] px-4 py-3 min-w-[140px] shadow-lg shadow-slate-900/5">
+            <div className="grid grid-cols-2 gap-3 w-full sm:w-auto min-w-0">
+              <div className="min-w-0 bg-white/85 border border-[#e4eadc] rounded-[1.35rem] px-4 py-3 shadow-lg shadow-slate-900/5">
                 <div className="mb-2 h-8 w-8 rounded-xl bg-[#fff8ea] text-[#71806b] flex items-center justify-center">
                   <Leaf size={15} />
                 </div>
@@ -260,7 +260,7 @@ export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps)
                 </p>
               </div>
 
-              <div className="bg-[#dff5df] border border-[#bcd3b1] rounded-[1.35rem] px-4 py-3 min-w-[140px] shadow-lg shadow-[#5f7f3a]/10">
+              <div className="min-w-0 bg-[#dff5df] border border-[#bcd3b1] rounded-[1.35rem] px-4 py-3 shadow-lg shadow-[#5f7f3a]/10">
                 <div className="mb-2 h-8 w-8 rounded-xl bg-white/70 text-[#5f7f3a] flex items-center justify-center">
                   <Sparkles size={15} />
                 </div>
@@ -275,7 +275,7 @@ export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps)
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-500 mb-2">
               <span>Current: {consumedCalories} kcal</span>
               <span>Goal: {targetCalories} kcal</span>
             </div>
@@ -292,7 +292,7 @@ export default function DailyStats({ profile, refreshKey = 0 }: DailyStatsProps)
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
         <MacroCard
           label="Protein"
           consumed={totals.protein}

@@ -60,7 +60,7 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
   );
 
   return (
-    <div className="wellness-surface premium-hover p-5 sm:p-7 rounded-[2rem] space-y-6 relative overflow-hidden group">
+    <div className="wellness-surface premium-hover min-w-0 p-4 sm:p-6 lg:p-7 rounded-[2rem] space-y-5 sm:space-y-6 relative overflow-hidden group">
       <div
         className={`absolute top-0 right-0 w-48 h-48 ${category.bg} opacity-[0.07] rounded-full -mr-20 -mt-20 blur-2xl transition-all group-hover:scale-110`}
       />
@@ -73,8 +73,8 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
             <Activity size={18} />
           </div>
 
-          <div>
-            <h3 className="font-black text-slate-950 text-xl tracking-tight">
+          <div className="min-w-0">
+            <h3 className="font-black text-slate-950 text-lg sm:text-xl tracking-tight">
               Body Analysis
             </h3>
             <p className="text-xs font-semibold text-slate-500">
@@ -89,14 +89,14 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8 items-center">
         <div className="space-y-2">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.18em]">
             Current BMI
           </p>
 
           <div className="flex flex-wrap items-baseline gap-3">
-            <span className="text-5xl sm:text-6xl font-black text-slate-950 tracking-tighter">
+            <span className="text-4xl sm:text-5xl xl:text-6xl font-black text-slate-950 tracking-tighter">
               {bmi}
             </span>
             <div
@@ -106,7 +106,7 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
             </div>
           </div>
 
-          <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-[240px]">
+          <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-md break-words">
             {category.tip}
           </p>
         </div>
@@ -138,8 +138,8 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-[#dcebd1]">
-        <div className="flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
+      <div className="grid grid-cols-1 min-[390px]:grid-cols-2 gap-3 pt-4 border-t border-[#dcebd1]">
+        <div className="min-w-0 flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
           <div className="w-9 h-9 bg-[#dff5df] rounded-xl flex items-center justify-center text-[#5f7f3a]">
             <Scale size={15} />
           </div>
@@ -153,7 +153,7 @@ export default function HealthInsights({ profile }: { profile: Profile }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
+        <div className="min-w-0 flex items-center gap-3 rounded-2xl border border-[#e4eadc] bg-white/80 p-3 shadow-sm">
           <div className="w-9 h-9 bg-[#e5ecdf] rounded-xl flex items-center justify-center text-[#71806b]">
             <Ruler size={15} />
           </div>

@@ -153,35 +153,35 @@ export default function WaterTracker() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6 items-start">
+    <div className="mx-auto w-full max-w-screen-xl min-w-0 space-y-4 sm:space-y-6">
+      <div className="grid min-w-0 grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6 lg:gap-8 items-start">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 md:p-7 relative overflow-hidden"
+          className="wellness-surface premium-card rounded-[2rem] sm:rounded-[2.25rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden"
         >
           <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-[#e5ecdf]/90 blur-3xl" />
           <div className="absolute -left-20 bottom-10 h-52 w-52 rounded-full bg-[#dff5df]/70 blur-3xl" />
 
-          <div className="relative space-y-6">
+          <div className="relative min-w-0 space-y-5 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 bg-[#e5ecdf] border border-[#cfdac8] text-[#71806b] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
                   <Droplets size={14} />
                   Hydration Tracker
                 </div>
 
-                <h3 className="text-3xl sm:text-4xl font-black text-slate-950 mt-3 tracking-tight">
+                <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-950 mt-3 tracking-tight">
                   Water Intake
                 </h3>
 
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1 break-words">
                   Stay hydrated and track your daily water goal.
                 </p>
               </div>
 
               <div
-                className={`rounded-[1.35rem] px-5 py-4 text-left sm:text-right w-full sm:w-auto min-w-[170px] border shadow-xl shadow-slate-900/5 ${
+                className={`rounded-[1.35rem] px-5 py-4 text-left sm:text-right w-full sm:w-auto min-w-0 sm:min-w-[170px] border shadow-xl shadow-slate-900/5 ${
                   isGoalReached
                     ? "bg-[#dff5df] border-[#bcd3b1]"
                     : "bg-[#e5ecdf] border-[#cfdac8]"
@@ -208,7 +208,7 @@ export default function WaterTracker() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-500 mb-2">
                 <span>Current: {totalMl} ml</span>
                 <span>Goal: {targetMl} ml</span>
               </div>
@@ -304,11 +304,11 @@ export default function WaterTracker() {
           </div>
         </motion.div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-[2rem] p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
+            className={`rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
               isGoalReached
                 ? "bg-gradient-to-br from-[#dff5df] to-[#edf7e8] border-[#bcd3b1]"
                 : "bg-white/90 border-slate-200"
@@ -332,7 +332,7 @@ export default function WaterTracker() {
               {isGoalReached ? "Hydration Complete" : "Today's Status"}
             </h4>
 
-            <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+            <p className="text-sm text-slate-500 mt-2 leading-relaxed break-words">
               {isGoalReached
                 ? "Great job. You reached your hydration goal today and kept your routine on track."
                 : "You are making progress. Keep going and try to spread your water intake evenly throughout the day."}
@@ -360,7 +360,7 @@ export default function WaterTracker() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`rounded-[2rem] p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
+            className={`rounded-[2rem] p-4 sm:p-5 shadow-lg shadow-slate-900/5 border premium-hover ${
               isGoalReached
                 ? "bg-gradient-to-br from-[#edf7e8] to-[#dff5df] border-[#bcd3b1]"
                 : "bg-gradient-to-br from-[#fff8ea] to-[#dff5df] border-[#dcebd1]"
@@ -378,7 +378,7 @@ export default function WaterTracker() {
 
             <h4 className="text-lg font-black text-slate-950">Daily Tip</h4>
 
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed break-words">
               {isGoalReached
                 ? "Excellent consistency. Since you reached your target, keep this rhythm tomorrow as well to build a strong hydration habit."
                 : "A simple habit is to drink one glass of water after waking up, one before lunch, and one in the afternoon to stay more consistent."}

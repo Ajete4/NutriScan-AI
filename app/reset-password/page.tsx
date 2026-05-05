@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,14 +10,49 @@ import { supabase } from "@/lib/supabaseClient";
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [hasResetSession, setHasResetSession] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: string }>({
     text: "",
     type: "",
   });
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      setHasResetSession(Boolean(session));
+      setCheckingSession(false);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || session) {
+        setHasResetSession(true);
+        setCheckingSession(false);
+      }
+    });
+
+    checkSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!hasResetSession) return;
+
     setLoading(true);
     setMessage({ text: "", type: "" });
 
@@ -33,7 +68,10 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setMessage({ text: error.message, type: "error" });
+      setMessage({
+        text: "We couldn't update your password. Please use the password reset link sent to your email.",
+        type: "error",
+      });
       setLoading(false);
       return;
     }
@@ -70,49 +108,75 @@ export default function ResetPasswordPage() {
           </div>
         </div>
 
-        <div className="mt-8">
-          <h1 className="text-3xl font-black tracking-tight text-slate-950">
-            Set New Password
-          </h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Enter a new password for your account.
-          </p>
-        </div>
-
-        <form onSubmit={handleUpdatePassword} className="mt-8 space-y-4">
-          <label className="block">
-            <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              <KeyRound size={14} /> New Password
-            </span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
-            />
-          </label>
-
-          {message.text && (
-            <div
-              className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
-                message.type === "error"
-                  ? "bg-red-50 text-red-600 border border-red-100"
-                  : "bg-[#dff5df] text-[#5f7f3a] border border-[#bcd3b1]"
-              }`}
-            >
-              {message.text}
+        {checkingSession ? (
+          <div className="mt-8 rounded-2xl border border-[#dcebd1] bg-white/80 px-4 py-3 text-sm font-semibold text-slate-500">
+            Checking password reset link...
+          </div>
+        ) : hasResetSession ? (
+          <>
+            <div className="mt-8">
+              <h1 className="text-3xl font-black tracking-tight text-slate-950">
+                Set New Password
+              </h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Enter a new password for your account.
+              </p>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#5f7f3a] px-5 py-3.5 font-black text-white shadow-lg shadow-[#5f7f3a]/20 transition hover:bg-[#4d6b2f] disabled:opacity-70 focus-ring"
-          >
-            {loading ? "Updating..." : "Update Password"}
-          </button>
-        </form>
+            <form onSubmit={handleUpdatePassword} className="mt-8 space-y-4">
+              <label className="block">
+                <span className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                  <KeyRound size={14} /> New Password
+                </span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-2xl border border-[#dcebd1] bg-white/85 px-4 py-3.5 text-slate-900 outline-none transition focus:border-[#8fa58a] focus:ring-4 focus:ring-[#5f7f3a]/10"
+                />
+              </label>
+
+              {message.text && (
+                <div
+                  className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                    message.type === "error"
+                      ? "bg-red-50 text-red-600 border border-red-100"
+                      : "bg-[#dff5df] text-[#5f7f3a] border border-[#bcd3b1]"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#5f7f3a] px-5 py-3.5 font-black text-white shadow-lg shadow-[#5f7f3a]/20 transition hover:bg-[#4d6b2f] disabled:opacity-70 focus-ring"
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="mt-8 space-y-5">
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-slate-950">
+                Reset Link Required
+              </h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Please use the password reset link sent to your email.
+              </p>
+            </div>
+
+            <Link
+              href="/login"
+              className="w-full inline-flex items-center justify-center rounded-2xl bg-[#5f7f3a] px-5 py-3.5 font-black text-white shadow-lg shadow-[#5f7f3a]/20 transition hover:bg-[#4d6b2f] focus-ring"
+            >
+              Back to Login
+            </Link>
+          </div>
+        )}
 
         <p className="mt-6 text-center text-sm font-medium text-slate-500">
           Back to{" "}

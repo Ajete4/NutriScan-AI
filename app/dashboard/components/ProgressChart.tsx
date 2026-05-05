@@ -233,28 +233,28 @@ export default function ProgressChart() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 relative overflow-hidden">
+    <div className="mx-auto w-full max-w-screen-xl min-w-0 space-y-4 sm:space-y-6">
+      <div className="wellness-surface premium-card rounded-[2rem] sm:rounded-[2.25rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-[#dff5df]/75 blur-3xl" />
         <div className="absolute -left-20 bottom-8 h-52 w-52 rounded-full bg-[#fff3e2]/70 blur-3xl" />
-        <div className="relative flex flex-col gap-6">
+        <div className="relative flex min-w-0 flex-col gap-5 sm:gap-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <div className="inline-flex items-center gap-2 bg-[#fff3e2] border border-[#f8d5c9] text-[#bd625c] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
                 <BarChart3 size={14} />
                 Progress Analytics
               </div>
 
-              <h3 className="text-3xl sm:text-4xl font-black text-slate-950 mt-3 tracking-tight">
+              <h3 className="text-2xl sm:text-3xl xl:text-4xl font-black text-slate-950 mt-3 tracking-tight">
                 Nutrition Progress
               </h3>
 
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1 break-words">
                 Track your calorie intake over time
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">
               {periodOptions.map((option) => (
                 <button
                   key={option.id}
@@ -270,8 +270,8 @@ export default function ProgressChart() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="min-w-0 bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
                 <Flame size={16} className="text-[#f28f7c]" />
                 Total
@@ -282,7 +282,7 @@ export default function ProgressChart() {
               <p className="text-sm text-slate-400">kcal</p>
             </div>
 
-            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
+            <div className="min-w-0 bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
                 <CalendarDays size={16} className="text-[#8fa58a]" />
                 Average
@@ -293,7 +293,7 @@ export default function ProgressChart() {
               <p className="text-sm text-slate-400">kcal</p>
             </div>
 
-            <div className="bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
+            <div className="min-w-0 bg-white/85 border border-[#e4eadc] rounded-[1.35rem] p-4 shadow-lg shadow-slate-900/5">
               <div className="flex items-center gap-2 text-slate-500 text-sm font-semibold">
                 <TrendingUp size={16} className="text-[#5f7f3a]" />
                 Highest
@@ -305,7 +305,7 @@ export default function ProgressChart() {
             </div>
           </div>
 
-          <div className="h-[280px] sm:h-[340px] w-full pt-2 overflow-hidden rounded-[1.5rem] border border-[#edf1e8] bg-white/55 p-2 shadow-inner">
+          <div className="h-[260px] sm:h-[320px] lg:h-[360px] min-w-0 w-full overflow-hidden rounded-[1.5rem] border border-[#edf1e8] bg-white/55 p-2 shadow-inner">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>

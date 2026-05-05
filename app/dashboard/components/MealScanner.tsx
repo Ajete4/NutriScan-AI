@@ -271,21 +271,21 @@ export default function MealScanner({ onMealSaved }: MealScannerProps) {
   };
 
   return (
-    <div className="self-start wellness-surface premium-card rounded-[2.25rem] p-4 sm:p-6 space-y-5 sm:space-y-6 relative overflow-hidden">
+    <div className="self-start wellness-surface premium-card min-w-0 rounded-[2rem] sm:rounded-[2.25rem] p-4 sm:p-5 lg:p-6 space-y-5 sm:space-y-6 relative overflow-hidden">
       <div className="absolute -right-12 top-0 h-56 w-56 rounded-full bg-[#f8d5c9]/65 blur-3xl" />
       <div className="absolute -left-16 bottom-16 h-44 w-44 rounded-full bg-[#dff5df]/60 blur-3xl" />
-      <div className="relative flex items-center justify-between gap-4 flex-wrap">
-        <div>
+      <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="min-w-0">
           <div className="inline-flex items-center gap-2 bg-[#fff3e2] border border-[#f8d5c9] text-[#bd625c] px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.14em]">
             <Sparkles size={14} />
             AI Scanner
           </div>
 
-          <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-3 tracking-tight">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-950 mt-3 tracking-tight">
             Scan your meal
           </h3>
 
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1 break-words">
             Upload a meal photo and let AI estimate calories and macros
           </p>
 
@@ -307,7 +307,7 @@ export default function MealScanner({ onMealSaved }: MealScannerProps) {
         <button
           onClick={handleChooseImage}
           disabled={uploading || analyzing || saving}
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#5f7f3a] text-white font-bold hover:bg-[#4d6b2f] hover:-translate-y-0.5 shadow-xl shadow-[#5f7f3a]/20 transition disabled:opacity-70 w-full sm:w-auto focus-ring"
+          className="flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#5f7f3a] text-white font-bold hover:bg-[#4d6b2f] hover:-translate-y-0.5 shadow-xl shadow-[#5f7f3a]/20 transition disabled:opacity-70 focus-ring"
         >
           <Camera size={18} />
           Add
@@ -326,7 +326,7 @@ export default function MealScanner({ onMealSaved }: MealScannerProps) {
       {!previewUrl && (
         <div
           onClick={handleChooseImage}
-          className="group border-2 border-dashed border-[#bcd3b1] rounded-[2rem] p-6 sm:p-10 text-center cursor-pointer bg-white/75 hover:border-[#8fa58a] hover:bg-[#dff5df]/50 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-[#5f7f3a]/10 transition-all duration-300"
+          className="group border-2 border-dashed border-[#bcd3b1] rounded-[2rem] p-5 sm:p-8 lg:p-10 text-center cursor-pointer bg-white/75 hover:border-[#8fa58a] hover:bg-[#dff5df]/50 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-[#5f7f3a]/10 transition-all duration-300"
         >
           <div className="w-16 h-16 mx-auto rounded-[1.35rem] bg-[#dff5df] flex items-center justify-center mb-4 shadow-lg shadow-[#5f7f3a]/10 transition-transform group-hover:scale-105">
             <ImageIcon size={24} className="text-[#5f7f3a]" />
@@ -384,7 +384,13 @@ export default function MealScanner({ onMealSaved }: MealScannerProps) {
 
             <button
               onClick={handleUpload}
-              disabled={!selectedFile || uploading || analyzing || saving}
+              disabled={
+                !selectedFile ||
+                uploading ||
+                analyzing ||
+                saving ||
+                !!uploadedImageUrl
+              }
               className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-950 text-white font-semibold hover:bg-slate-800 transition disabled:opacity-70 focus-ring"
             >
               {uploading ? (
@@ -432,12 +438,12 @@ export default function MealScanner({ onMealSaved }: MealScannerProps) {
             AI Result
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9] col-span-2">
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl p-4 border border-[#f8d5c9] min-[380px]:col-span-2 min-w-0">
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Meal
               </p>
-              <p className="text-lg font-black text-slate-900 mt-1">
+              <p className="text-base sm:text-lg font-black text-slate-900 mt-1 break-words">
                 {analysis.meal_name}
               </p>
               <p className="text-sm text-[#bd625c] font-semibold mt-1 capitalize">
