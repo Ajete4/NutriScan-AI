@@ -20,6 +20,11 @@ import {
 
 
 import { supabase } from "@/lib/supabaseClient";
+import {
+  normalizeAIPlanData,
+  normalizeAIPlanRow,
+  type AIPlanRow,
+} from "@/lib/aiPlan";
 import { useAuth } from "../context/AuthContext";
 
 import TopBar from "./components/TopBar";
@@ -63,6 +68,7 @@ export default function DashboardPage() {
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
   const hasInitializedRef = useRef(false);
+  const hasRedirectedToSetupRef = useRef(false);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const showSuccessMessage = (message: string) => {
@@ -105,7 +111,7 @@ export default function DashboardPage() {
       }
 
       if (existingPlans && existingPlans.length > 0) {
-        const typedPlans = existingPlans as AIPlan[];
+        const typedPlans = (existingPlans as AIPlanRow[]).map(normalizeAIPlanRow);
         setPlansHistory(typedPlans);
         setPlan(typedPlans[0]);
         setSelectedPlanId(typedPlans[0].id);
@@ -130,8 +136,21 @@ export default function DashboardPage() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
+    if (authLoading || profileLoading) return;
+    if (profileError) {
+      setLoadingPage(false);
+      return;
+    }
+    if (!user || profile || profileError || hasRedirectedToSetupRef.current) return;
+
+    hasRedirectedToSetupRef.current = true;
+    router.replace("/setup");
+  }, [authLoading, profileLoading, profileError, profile, router, user]);
+
+  useEffect(() => {
     if (!user?.id) {
       hasInitializedRef.current = false;
+      hasRedirectedToSetupRef.current = false;
     }
   }, [user?.id]);
 
@@ -215,7 +234,7 @@ export default function DashboardPage() {
         return;
       }
 
-      setPlan(aiData);
+      setPlan(normalizeAIPlanData(aiData));
       setSelectedPlanId(null);
       showSuccessMessage("New AI plan generated successfully.");
     } catch (err) {
@@ -227,38 +246,73 @@ export default function DashboardPage() {
   };
 
   const handleSavePlan = async () => {
-    if (!user || !plan || savingPlan || selectedPlanId) return;
+    if (savingPlan || selectedPlanId) return;
+
+    if (!plan) return;
 
     try {
       setSavingPlan(true);
       setError(null);
       setSuccessMessage(null);
 
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user?.id) {
+        setError("Your session expired. Please log in again.");
+        router.push("/login");
+        return;
+      }
+
+      const normalizedPlan = normalizeAIPlanData(plan);
+
+      const insertPayload = {
+        user_id: session.user.id,
+        daily_plan: normalizedPlan.daily_plan,
+        weekly_plan: normalizedPlan.weekly_plan,
+        monthly_tips: normalizedPlan.monthly_tips,
+        explanation: normalizedPlan.explanation,
+      };
+
       const { data, error: insertError } = await supabase
         .from("ai_plans")
-        .insert({
-          user_id: user.id,
-          daily_plan: plan.daily_plan,
-          weekly_plan: plan.weekly_plan,
-          monthly_tips: plan.monthly_tips,
-        })
+        .insert([insertPayload])
         .select()
         .single();
 
       if (insertError) {
-        console.error("Save plan error:", insertError);
-        setError("We couldn't save your AI plan. Please try again.");
-        return;
+        if (insertError.code === "42501") {
+          setError("Permission denied. Please re-login.");
+          return;
+        }
+
+        if (insertError.code === "PGRST204") {
+          const missingColumn = insertError.message.match(/'([^']+)' column/)?.[1];
+          setError(
+            missingColumn
+              ? `Database schema mismatch. Missing column: ${missingColumn}.`
+              : "Database schema mismatch. Contact admin."
+          );
+          return;
+        }
+
+        throw insertError;
       }
 
-      const savedPlan = data as AIPlan;
+      if (!data) {
+        throw new Error("Save plan returned no row after insert/select.");
+      }
+
+      const savedPlan = normalizeAIPlanRow(data as AIPlanRow);
 
       setPlan(savedPlan);
       setSelectedPlanId(savedPlan.id);
       setPlansHistory((prev) => [savedPlan, ...prev]);
       showSuccessMessage("AI plan saved successfully.");
     } catch (err) {
-      console.error("Save plan exception:", err);
+      console.error("Unexpected save plan error:", err);
       setError("Something went wrong while saving your AI plan.");
     } finally {
       setSavingPlan(false);
@@ -345,7 +399,7 @@ export default function DashboardPage() {
     },
   ];
 
-  if (authLoading || profileLoading || loadingPage) {
+  if (authLoading || profileLoading || (!profileError && loadingPage)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fff8ea] px-6">
         <div className="wellness-surface rounded-[2rem] px-6 py-5">
@@ -383,7 +437,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_0%,rgba(95,127,58,0.14),transparent_26rem),radial-gradient(circle_at_90%_8%,rgba(242,143,124,0.14),transparent_24rem),linear-gradient(180deg,#fffaf0_0%,#edf7e8_58%,#fff8ea_100%)] text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_20%_0%,rgba(95,127,58,0.14),transparent_26rem),radial-gradient(circle_at_90%_8%,rgba(242,143,124,0.14),transparent_24rem),linear-gradient(180deg,#fffaf0_0%,#edf7e8_58%,#fff8ea_100%)] text-slate-900">
       <div className="lg:hidden sticky top-0 z-50 bg-[#fffaf0]/90 backdrop-blur-2xl border-b border-[#dcebd1] shadow-[0_12px_30px_rgba(37,51,34,0.08)]">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -431,7 +485,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="flex">
+      <div className="flex min-w-0">
         <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-[19rem] bg-[#fffaf0]/88 backdrop-blur-2xl border-r border-[#dcebd1] shadow-[18px_0_60px_rgba(37,51,34,0.07)] flex-col px-5 py-7">
           <div className="flex items-center gap-3 mb-7 px-2">
             <div className="relative h-[3.25rem] w-[3.25rem] rounded-[1.6rem] bg-gradient-to-br from-[#3b4f23] via-[#5f7f3a] to-[#f28f7c] flex items-center justify-center text-white shadow-2xl shadow-[#5f7f3a]/25 ring-1 ring-white/80">
@@ -506,10 +560,10 @@ export default function DashboardPage() {
           </button>
         </aside>
 
-        <main className="flex-1 lg:ml-[19rem] min-h-screen">
+        <main className="min-w-0 flex-1 lg:ml-[19rem] min-h-screen">
           <TopBar profile={profile} onProfileUpdated={setProfile} />
 
-          <div className="px-3 py-4 sm:px-6 md:px-8 lg:px-10 lg:py-8 max-w-[1480px] mx-auto">
+          <div className="mx-auto w-full max-w-screen-2xl px-3 py-4 sm:px-5 md:px-7 lg:px-8 xl:px-10 lg:py-8">
             {successMessage && (
               <div className="mb-4 rounded-2xl border border-[#bcd3b1] bg-[#dff5df]/90 px-4 py-3 text-sm text-[#3b4f23] font-bold shadow-sm">
                 {successMessage}
@@ -523,12 +577,17 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 items-start"
+                  className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-12 xl:gap-8 items-start"
                 >
                   <div className="xl:col-span-8 space-y-4 sm:space-y-6 min-w-0">
                     <DailyStats profile={profile} refreshKey={mealRefreshKey} />
                     <HealthInsights profile={profile} />
-                    <RecentLogs refreshKey={mealRefreshKey} />
+                    <RecentLogs
+                      refreshKey={mealRefreshKey}
+                      onMealDeleted={() =>
+                        setMealRefreshKey((current) => current + 1)
+                      }
+                    />
                   </div>
 
                   <div className="xl:col-span-4 min-w-0">
