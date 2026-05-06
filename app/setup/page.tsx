@@ -150,7 +150,7 @@ export default function SetupPage() {
 
     const fullName =
       typeof user.user_metadata?.full_name === "string" &&
-      user.user_metadata.full_name.trim()
+        user.user_metadata.full_name.trim()
         ? user.user_metadata.full_name.trim()
         : user.email?.split("@")[0] || "User";
 
@@ -165,11 +165,12 @@ export default function SetupPage() {
         diet_type: formData.diet_type,
         activity_level: formData.activity_level,
         goal: formData.goal,
-        allergies: normalizeText(formData.allergies),
-        intolerances: normalizeText(formData.intolerances),
-        chronic_conditions: normalizeText(formData.chronic_conditions),
+        allergies: formData.allergies ? [formData.allergies] : [],
+        intolerances: formData.intolerances ? [formData.intolerances] : [],
+        chronic_conditions: formData.chronic_conditions ? [formData.chronic_conditions] : [],
         meal_frequency: formData.meal_frequency,
         updated_at: new Date().toISOString(),
+        
       });
 
       if (error) {
