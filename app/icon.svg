@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NutriScan AI">
+  <defs>
+    <linearGradient id="nutriscan-bg" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b4f23" />
+      <stop offset="0.55" stop-color="#5f7f3a" />
+      <stop offset="1" stop-color="#f28f7c" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="20" fill="url(#nutriscan-bg)" />
+  <path
+    d="M43.5 13.5C35 15.4 24.2 19.2 18.7 26.6c-4.3 5.8-3.8 13.3 1.2 18.4 5 5.1 12.8 5.6 18.7 1.2 7.3-5.5 11.1-16.3 13-24.8.5-2.4-1.7-4.6-4.1-4.1Z"
+    fill="none"
+    stroke="#fffaf0"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M18.8 45.1c6.9-8 14.8-15.4 25-21.6"
+    fill="none"
+    stroke="#fffaf0"
+    stroke-width="5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M47 12.5l1.4 3.1 3.1 1.4-3.1 1.4-1.4 3.1-1.4-3.1-3.1-1.4 3.1-1.4L47 12.5Z"
+    fill="#fffaf0"
+  />
+  <circle cx="17" cy="17" r="2" fill="#dff5df" opacity="0.95" />
+</svg>
