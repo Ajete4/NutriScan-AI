@@ -83,6 +83,10 @@ export default function DashboardPage() {
     }, 3000);
   };
 
+  const handleLogout = () => {
+    supabase.auth.signOut().then(() => router.push("/login"));
+  };
+
   const initializeDashboard = useCallback(async () => {
     setLoadingPage(true);
     setError(null);
@@ -463,24 +467,35 @@ export default function DashboardPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`flex items-center gap-2 px-3 py-3 rounded-2xl border text-sm font-bold transition focus-ring ${
-                  activeTab === item.id
-                    ? "bg-gradient-to-r from-[#dff5df] to-[#fff3e2] text-slate-950 border-[#bcd3b1] shadow-sm"
-                    : "bg-white/85 border-slate-200 text-slate-600 hover:bg-white hover:text-slate-900"
-                }`}
-              >
-                <item.icon size={18} className={item.color} />
-                {item.label}
-              </button>
-            ))}
+          <div className="px-4 pb-4">
+            <div className="grid grid-cols-2 gap-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-2 px-3 py-3 rounded-2xl border text-sm font-bold transition focus-ring ${
+                    activeTab === item.id
+                      ? "bg-gradient-to-r from-[#dff5df] to-[#fff3e2] text-slate-950 border-[#bcd3b1] shadow-sm"
+                      : "bg-white/85 border-slate-200 text-slate-600 hover:bg-white hover:text-slate-900"
+                  }`}
+                >
+                  <item.icon size={18} className={item.color} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold text-red-500 shadow-sm transition hover:bg-red-100 focus-ring"
+              type="button"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
           </div>
         )}
       </div>
@@ -550,9 +565,7 @@ export default function DashboardPage() {
           </nav>
 
           <button
-            onClick={() =>
-              supabase.auth.signOut().then(() => router.push("/login"))
-            }
+            onClick={handleLogout}
             className="mt-auto flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition focus-ring"
           >
             <LogOut size={18} />
