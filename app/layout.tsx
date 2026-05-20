@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "NutriScan AI",
   description: "AI-powered nutrition, meal scanning, and wellness tracking.",
+  manifest: "/manifest.json",
+  applicationName: "NutriScan AI",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
